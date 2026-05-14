@@ -1,15 +1,15 @@
 import type { MbtiType } from "./domain";
 
 export interface CommunicationProfile {
-  informationOrder: string;
-  evidenceStyle: string;
-  tone: string;
-  decisionStyle: string;
-  relationshipSignal: string;
-  density: string;
+  readonly informationOrder: string;
+  readonly evidenceStyle: string;
+  readonly tone: string;
+  readonly decisionStyle: string;
+  readonly relationshipSignal: string;
+  readonly density: string;
 }
 
-const baseProfiles: Record<MbtiType, CommunicationProfile> = {
+const baseProfiles: Record<MbtiType, Readonly<CommunicationProfile>> = {
   INTJ: {
     informationOrder: "先结论，再给判断依据",
     evidenceStyle: "原理逻辑、系统风险、长期影响",
@@ -141,7 +141,7 @@ const baseProfiles: Record<MbtiType, CommunicationProfile> = {
 };
 
 export function getCommunicationProfile(type: MbtiType): CommunicationProfile {
-  return baseProfiles[type];
+  return { ...baseProfiles[type] };
 }
 
 export function summarizeDirection(senderType: MbtiType, receiverType: MbtiType): string {
