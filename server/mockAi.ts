@@ -95,8 +95,8 @@ export function mockGenerateTranslation(
       .filter((content) => content !== primaryIntent.content)
   ];
   const adjustedExpressions = parsed.strengthApproved
-    ? ["保留了必要的提醒力度", "把责备感转为事实和流程风险"]
-    : ["降低了原句强度", "把绝对化措辞改成可讨论的复盘建议"];
+    ? ["把原话里可能被听成责备的部分，调整成事实和流程风险"]
+    : ["保留了较直接的表达强度", "只调整信息顺序和清晰度"];
 
   return translationResponseSchema.parse({
     translatedMessage:
