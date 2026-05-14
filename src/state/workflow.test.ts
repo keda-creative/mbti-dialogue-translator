@@ -1,5 +1,6 @@
 import { initialWorkflowState, reducer, selectCanAnalyze, selectCanTranslate } from "./workflow";
-import type { IntentCard, TranslationResult } from "../shared/domain";
+import type { IntentCard, TranslationResult, TranslatorConfig } from "../shared/domain";
+import type { WorkflowState } from "./workflow";
 
 const result: TranslationResult = {
   translatedMessage: "请先评估这个方案的风险，再决定是否继续。",
@@ -23,6 +24,42 @@ const intentCard = (card: Partial<IntentCard> & Pick<IntentCard, "id">): IntentC
   markers: [],
   ...card
 });
+
+const nextConfig: TranslatorConfig = {
+  senderType: "INTJ",
+  receiverType: "ESFP",
+  scenario: "romantic"
+};
+
+function analyzedState(): WorkflowState {
+  return {
+    ...initialWorkflowState,
+    originalMessage: "你这个方案风险太高了。",
+    intentCards: [intentCard({ id: "intent-1", markers: ["primary", "softenable"] })],
+    clarifyingQuestions: [
+      {
+        id: "question-1",
+        question: "对方是否已经知道背景？",
+        reason: "影响信息顺序。"
+      }
+    ],
+    clarificationAnswers: {
+      "question-1": "知道一部分。"
+    },
+    strengthApproved: true,
+    error: "需要安全改写。",
+    result
+  };
+}
+
+function expectAnalysisReset(state: WorkflowState) {
+  expect(state.intentCards).toEqual([]);
+  expect(state.clarifyingQuestions).toEqual([]);
+  expect(state.clarificationAnswers).toEqual({});
+  expect(state.strengthApproved).toBe(false);
+  expect(state.result).toBeNull();
+  expect(state.error).toBeNull();
+}
 
 test("requires original message before intent analysis", () => {
   expect(selectCanAnalyze(initialWorkflowState)).toBe(false);
@@ -122,6 +159,27 @@ test("toggles non-primary markers on and off", () => {
   expect(withoutSensitive.intentCards[0]?.markers).not.toContain("sensitive");
 });
 
+test("clears strength approval when the strength gate is no longer visible", () => {
+  const state = {
+    ...initialWorkflowState,
+    intentCards: [intentCard({ id: "intent-1", markers: ["softenable"] })],
+    strengthApproved: true
+  };
+
+  const withoutSoftenableMarker = reducer(state, {
+    type: "toggleMarker",
+    id: "intent-1",
+    marker: "softenable"
+  });
+  const withoutSoftenableCard = reducer(state, {
+    type: "deleteIntent",
+    id: "intent-1"
+  });
+
+  expect(withoutSoftenableMarker.strengthApproved).toBe(false);
+  expect(withoutSoftenableCard.strengthApproved).toBe(false);
+});
+
 test("clears the translation result when intent content or strength approval changes", () => {
   const withCards = reducer(initialWorkflowState, {
     type: "setIntentCards",
@@ -153,4 +211,22 @@ test("clones intent cards and markers when setting intent cards", () => {
 
   expect(state.intentCards[0]?.content).toBe("我想提醒方案风险。");
   expect(state.intentCards[0]?.markers).toEqual(["primary"]);
+});
+
+test("resets analysis state when original message or config changes", () => {
+  const afterMessageChange = reducer(analyzedState(), {
+    type: "setOriginalMessage",
+    value: "我想换一个表达。"
+  });
+
+  expect(afterMessageChange.originalMessage).toBe("我想换一个表达。");
+  expectAnalysisReset(afterMessageChange);
+
+  const afterConfigChange = reducer(analyzedState(), {
+    type: "setConfig",
+    config: nextConfig
+  });
+
+  expect(afterConfigChange.config).toEqual(nextConfig);
+  expectAnalysisReset(afterConfigChange);
 });

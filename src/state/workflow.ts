@@ -47,12 +47,34 @@ export type WorkflowAction =
   | { type: "setError"; value: string | null }
   | { type: "setResult"; result: TranslationResult | null };
 
+function hasSoftenableIntent(cards: IntentCard[]): boolean {
+  return cards.some((card) => card.markers.includes("softenable"));
+}
+
+function resetAnalysis(state: WorkflowState): WorkflowState {
+  return {
+    ...state,
+    intentCards: [],
+    clarifyingQuestions: [],
+    clarificationAnswers: {},
+    strengthApproved: false,
+    error: null,
+    result: null
+  };
+}
+
+function syncStrengthApproval(state: WorkflowState, cards: IntentCard[]): boolean {
+  return hasSoftenableIntent(state.intentCards) && hasSoftenableIntent(cards)
+    ? state.strengthApproved
+    : false;
+}
+
 export function reducer(state: WorkflowState, action: WorkflowAction): WorkflowState {
   switch (action.type) {
     case "setConfig":
-      return { ...state, config: action.config, result: null };
+      return resetAnalysis({ ...state, config: action.config });
     case "setOriginalMessage":
-      return { ...state, originalMessage: action.value, result: null };
+      return resetAnalysis({ ...state, originalMessage: action.value });
     case "setIntentCards":
       return {
         ...state,
@@ -71,51 +93,66 @@ export function reducer(state: WorkflowState, action: WorkflowAction): WorkflowS
         result: null
       };
     case "deleteIntent":
-      return {
-        ...state,
-        intentCards: state.intentCards.filter((card) => card.id !== action.id),
-        result: null
-      };
-    case "toggleMarker":
+      {
+        const intentCards = state.intentCards.filter((card) => card.id !== action.id);
+        return {
+          ...state,
+          intentCards,
+          strengthApproved: syncStrengthApproval(state, intentCards),
+          result: null
+        };
+      }
+    case "toggleMarker": {
       if (!state.intentCards.some((card) => card.id === action.id)) {
         return state;
       }
 
       if (action.marker === "primary") {
+        const intentCards = state.intentCards.map((card) => {
+          if (card.id === action.id && card.markers.includes("primary")) {
+            return { ...card, markers: card.markers.filter((marker) => marker !== "primary") };
+          }
+
+          if (card.id === action.id) {
+            const markers: IntentMarker[] = [
+              ...card.markers.filter((marker) => marker !== "primary"),
+              "primary"
+            ];
+            return { ...card, markers };
+          }
+
+          if (card.markers.includes("primary")) {
+            return { ...card, markers: card.markers.filter((marker) => marker !== "primary") };
+          }
+
+          return card;
+        });
+
         return {
           ...state,
-          intentCards: state.intentCards.map((card) => {
-            if (card.id === action.id && card.markers.includes("primary")) {
-              return { ...card, markers: card.markers.filter((marker) => marker !== "primary") };
-            }
-
-            if (card.id === action.id) {
-              return { ...card, markers: [...card.markers.filter((marker) => marker !== "primary"), "primary"] };
-            }
-
-            if (card.markers.includes("primary")) {
-              return { ...card, markers: card.markers.filter((marker) => marker !== "primary") };
-            }
-
-            return card;
-          }),
+          intentCards,
+          strengthApproved: syncStrengthApproval(state, intentCards),
           result: null
         };
       }
 
+      const intentCards = state.intentCards.map((card) => {
+        if (card.id !== action.id) {
+          return card;
+        }
+        const markers = card.markers.includes(action.marker)
+          ? card.markers.filter((marker) => marker !== action.marker)
+          : [...card.markers, action.marker];
+        return { ...card, markers };
+      });
+
       return {
         ...state,
-        intentCards: state.intentCards.map((card) => {
-          if (card.id !== action.id) {
-            return card;
-          }
-          const markers = card.markers.includes(action.marker)
-            ? card.markers.filter((marker) => marker !== action.marker)
-            : [...card.markers, action.marker];
-          return { ...card, markers };
-        }),
+        intentCards,
+        strengthApproved: syncStrengthApproval(state, intentCards),
         result: null
       };
+    }
     case "setClarificationAnswer":
       return {
         ...state,

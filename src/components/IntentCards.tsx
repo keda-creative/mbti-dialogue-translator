@@ -12,6 +12,7 @@ interface IntentCardsProps {
 
 interface IntentCardItemProps {
   card: IntentCard;
+  position: number;
   onUpdate: (id: string, content: string) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, marker: IntentMarker) => void;
@@ -25,8 +26,20 @@ function markerClass(card: IntentCard, marker: IntentMarker): string {
   return card.markers.includes(marker) ? "marker active" : "marker";
 }
 
-function IntentCardItem({ card, onUpdate, onDelete, onToggle }: IntentCardItemProps) {
+function isMarkerActive(card: IntentCard, marker: IntentMarker): boolean {
+  return card.markers.includes(marker);
+}
+
+function IntentCardItem({
+  card,
+  position,
+  onUpdate,
+  onDelete,
+  onToggle
+}: IntentCardItemProps) {
   const [draft, setDraft] = useState(card.content);
+  const cardLabel = `第 ${position} 个意图`;
+  const primaryLabel = isMarkerActive(card, "primary") ? "取消主意图" : "设为主意图";
 
   useEffect(() => {
     setDraft(card.content);
@@ -42,7 +55,7 @@ function IntentCardItem({ card, onUpdate, onDelete, onToggle }: IntentCardItemPr
       <div className="intent-card-header">
         <span className="intent-type">{getIntentTypeLabel(card)}</span>
         <button
-          aria-label="删除意图"
+          aria-label={`删除${cardLabel}`}
           className="icon-button"
           type="button"
           onClick={() => onDelete(card.id)}
@@ -53,6 +66,7 @@ function IntentCardItem({ card, onUpdate, onDelete, onToggle }: IntentCardItemPr
       <label className="textarea-label">
         <span>意图内容</span>
         <textarea
+          aria-label={`${cardLabel}内容`}
           value={draft}
           onChange={(event) => updateDraft(event.target.value)}
           rows={3}
@@ -60,13 +74,17 @@ function IntentCardItem({ card, onUpdate, onDelete, onToggle }: IntentCardItemPr
       </label>
       <div className="marker-row" aria-label="意图标记">
         <button
+          aria-label={`${cardLabel}：${primaryLabel}`}
+          aria-pressed={isMarkerActive(card, "primary")}
           className={markerClass(card, "primary")}
           type="button"
           onClick={() => onToggle(card.id, "primary")}
         >
-          设为主意图
+          {primaryLabel}
         </button>
         <button
+          aria-label={`${cardLabel}：敏感意图`}
+          aria-pressed={isMarkerActive(card, "sensitive")}
           className={markerClass(card, "sensitive")}
           type="button"
           onClick={() => onToggle(card.id, "sensitive")}
@@ -74,6 +92,8 @@ function IntentCardItem({ card, onUpdate, onDelete, onToggle }: IntentCardItemPr
           敏感意图
         </button>
         <button
+          aria-label={`${cardLabel}：可弱化`}
+          aria-pressed={isMarkerActive(card, "softenable")}
           className={markerClass(card, "softenable")}
           type="button"
           onClick={() => onToggle(card.id, "softenable")}
@@ -103,10 +123,11 @@ export function IntentCards({
         <h2>确认真正想表达的意图</h2>
       </div>
       <div className="intent-list">
-        {cards.map((card) => (
+        {cards.map((card, index) => (
           <IntentCardItem
             key={card.id}
             card={card}
+            position={index + 1}
             onUpdate={onUpdate}
             onDelete={onDelete}
             onToggle={onToggle}
