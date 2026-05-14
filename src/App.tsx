@@ -1,21 +1,65 @@
-import { useReducer } from "react";
+import { useReducer, useRef } from "react";
 import { ConfigBar } from "./components/ConfigBar";
 import { OriginalMessage } from "./components/OriginalMessage";
 import { requestIntentCards } from "./lib/api";
+import type { TranslatorConfig } from "./shared/domain";
 import { initialWorkflowState, reducer, selectCanAnalyze } from "./state/workflow";
+
+interface AnalysisRequestSnapshot {
+  config: TranslatorConfig;
+  originalMessage: string;
+}
+
+function configsMatch(left: TranslatorConfig, right: TranslatorConfig): boolean {
+  return (
+    left.senderType === right.senderType &&
+    left.receiverType === right.receiverType &&
+    left.scenario === right.scenario
+  );
+}
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialWorkflowState);
+  const latestInputRef = useRef<AnalysisRequestSnapshot>({
+    config: state.config,
+    originalMessage: state.originalMessage
+  });
+  const activeRequestIdRef = useRef(0);
+
+  latestInputRef.current = {
+    config: state.config,
+    originalMessage: state.originalMessage
+  };
+
+  function isCurrentRequest(
+    requestId: number,
+    request: AnalysisRequestSnapshot
+  ): boolean {
+    const latestInput = latestInputRef.current;
+    return (
+      activeRequestIdRef.current === requestId &&
+      latestInput.originalMessage === request.originalMessage &&
+      configsMatch(latestInput.config, request.config)
+    );
+  }
 
   async function analyze() {
+    const request = {
+      config: state.config,
+      originalMessage: state.originalMessage
+    };
+    const requestId = activeRequestIdRef.current + 1;
+    activeRequestIdRef.current = requestId;
+
     dispatch({ type: "setLoading", value: true });
     dispatch({ type: "setError", value: null });
 
     try {
-      const response = await requestIntentCards({
-        config: state.config,
-        originalMessage: state.originalMessage
-      });
+      const response = await requestIntentCards(request);
+
+      if (!isCurrentRequest(requestId, request)) {
+        return;
+      }
 
       dispatch({
         type: "setIntentCards",
@@ -27,6 +71,10 @@ export default function App() {
         dispatch({ type: "setError", value: response.safetyRedirect });
       }
     } catch (error) {
+      if (!isCurrentRequest(requestId, request)) {
+        return;
+      }
+
       dispatch({
         type: "setError",
         value:
@@ -35,7 +83,9 @@ export default function App() {
             : "意图识别失败，请稍后重试。"
       });
     } finally {
-      dispatch({ type: "setLoading", value: false });
+      if (activeRequestIdRef.current === requestId) {
+        dispatch({ type: "setLoading", value: false });
+      }
     }
   }
 
@@ -50,7 +100,11 @@ export default function App() {
         config={state.config}
         onChange={(config) => dispatch({ type: "setConfig", config })}
       />
-      {state.error ? <div className="error-banner">{state.error}</div> : null}
+      {state.error ? (
+        <div className="error-banner" role="alert">
+          {state.error}
+        </div>
+      ) : null}
       <div className="workspace">
         <OriginalMessage
           value={state.originalMessage}

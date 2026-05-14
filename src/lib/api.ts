@@ -8,6 +8,7 @@ import {
 } from "../shared/contracts";
 
 const DEFAULT_ERROR_MESSAGE = "请求失败，请稍后重试。";
+const INVALID_RESPONSE_MESSAGE = "服务返回格式不完整，请稍后重试。";
 
 function readErrorMessage(payload: unknown): string {
   if (
@@ -23,6 +24,14 @@ function readErrorMessage(payload: unknown): string {
   return DEFAULT_ERROR_MESSAGE;
 }
 
+async function readJsonSafely(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 async function postJson<TResponse>(
   url: string,
   body: unknown,
@@ -34,12 +43,16 @@ async function postJson<TResponse>(
     body: JSON.stringify(body)
   });
 
-  const payload: unknown = await response.json();
+  const payload = await readJsonSafely(response);
   if (!response.ok) {
     throw new Error(readErrorMessage(payload));
   }
 
-  return parse(payload);
+  try {
+    return parse(payload);
+  } catch {
+    throw new Error(INVALID_RESPONSE_MESSAGE);
+  }
 }
 
 export function requestIntentCards(
