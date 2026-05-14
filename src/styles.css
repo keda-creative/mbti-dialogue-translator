@@ -52,3 +52,111 @@ h1 {
   color: #59645d;
   line-height: 1.7;
 }
+
+.config-bar,
+.workspace {
+  max-width: 1120px;
+  margin: 20px auto 0;
+}
+
+.config-bar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #d8d5c9;
+  background: #fffdfa;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: #4f5b52;
+  font-size: 0.9rem;
+}
+
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #c8cfc6;
+  background: #ffffff;
+  color: #18201b;
+  border-radius: 6px;
+}
+
+select {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+textarea {
+  resize: vertical;
+  padding: 12px;
+  line-height: 1.6;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.panel {
+  border: 1px solid #d8d5c9;
+  background: #fffdfa;
+  padding: 20px;
+}
+
+.panel-heading {
+  margin-bottom: 16px;
+}
+
+.panel-heading h2 {
+  margin: 4px 0 0;
+  font-size: 1.2rem;
+  letter-spacing: 0;
+}
+
+.step-label {
+  margin: 0;
+  color: #687469;
+  font-size: 0.85rem;
+}
+
+.textarea-label {
+  margin-bottom: 14px;
+}
+
+.primary-action {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #245e4f;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.primary-action:disabled {
+  cursor: not-allowed;
+  background: #9ba9a1;
+}
+
+.error-banner {
+  max-width: 1120px;
+  margin: 16px auto 0;
+  padding: 12px 14px;
+  border: 1px solid #d08b78;
+  background: #fff4ef;
+  color: #803824;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 20px;
+  }
+
+  .config-bar {
+    grid-template-columns: 1fr;
+  }
+}
