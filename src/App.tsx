@@ -1,9 +1,17 @@
 import { useReducer, useRef } from "react";
+import { ClarifyingQuestions } from "./components/ClarifyingQuestions";
 import { ConfigBar } from "./components/ConfigBar";
+import { IntentCards } from "./components/IntentCards";
 import { OriginalMessage } from "./components/OriginalMessage";
+import { StrengthGate } from "./components/StrengthGate";
 import { requestIntentCards } from "./lib/api";
 import type { TranslatorConfig } from "./shared/domain";
-import { initialWorkflowState, reducer, selectCanAnalyze } from "./state/workflow";
+import {
+  initialWorkflowState,
+  reducer,
+  selectCanAnalyze,
+  selectCanTranslate
+} from "./state/workflow";
 
 interface AnalysisRequestSnapshot {
   config: TranslatorConfig;
@@ -20,6 +28,9 @@ function configsMatch(left: TranslatorConfig, right: TranslatorConfig): boolean 
 
 export default function App() {
   const [state, dispatch] = useReducer(reducer, initialWorkflowState);
+  const hasSoftenableIntent = state.intentCards.some((card) =>
+    card.markers.includes("softenable")
+  );
   const latestInputRef = useRef<AnalysisRequestSnapshot>({
     config: state.config,
     originalMessage: state.originalMessage
@@ -113,6 +124,30 @@ export default function App() {
           onChange={(value) => dispatch({ type: "setOriginalMessage", value })}
           onAnalyze={analyze}
         />
+        <IntentCards
+          cards={state.intentCards}
+          canTranslate={selectCanTranslate(state)}
+          onUpdate={(id, content) =>
+            dispatch({ type: "updateIntentContent", id, content })
+          }
+          onDelete={(id) => dispatch({ type: "deleteIntent", id })}
+          onToggle={(id, marker) => dispatch({ type: "toggleMarker", id, marker })}
+        />
+        <ClarifyingQuestions
+          questions={state.clarifyingQuestions}
+          answers={state.clarificationAnswers}
+          onChange={(id, value) =>
+            dispatch({ type: "setClarificationAnswer", id, value })
+          }
+        />
+        {hasSoftenableIntent ? (
+          <StrengthGate
+            approved={state.strengthApproved}
+            onChange={(value) =>
+              dispatch({ type: "setStrengthApproved", value })
+            }
+          />
+        ) : null}
       </div>
     </main>
   );
