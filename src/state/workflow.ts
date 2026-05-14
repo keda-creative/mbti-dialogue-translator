@@ -56,7 +56,7 @@ export function reducer(state: WorkflowState, action: WorkflowAction): WorkflowS
     case "setIntentCards":
       return {
         ...state,
-        intentCards: action.cards,
+        intentCards: action.cards.map((card) => ({ ...card, markers: [...card.markers] })),
         clarifyingQuestions: action.questions,
         clarificationAnswers: {},
         strengthApproved: false,
@@ -77,17 +77,41 @@ export function reducer(state: WorkflowState, action: WorkflowAction): WorkflowS
         result: null
       };
     case "toggleMarker":
+      if (!state.intentCards.some((card) => card.id === action.id)) {
+        return state;
+      }
+
+      if (action.marker === "primary") {
+        return {
+          ...state,
+          intentCards: state.intentCards.map((card) => {
+            if (card.id === action.id && card.markers.includes("primary")) {
+              return { ...card, markers: card.markers.filter((marker) => marker !== "primary") };
+            }
+
+            if (card.id === action.id) {
+              return { ...card, markers: [...card.markers.filter((marker) => marker !== "primary"), "primary"] };
+            }
+
+            if (card.markers.includes("primary")) {
+              return { ...card, markers: card.markers.filter((marker) => marker !== "primary") };
+            }
+
+            return card;
+          }),
+          result: null
+        };
+      }
+
       return {
         ...state,
         intentCards: state.intentCards.map((card) => {
-          const withoutPrimary =
-            action.marker === "primary" ? card.markers.filter((marker) => marker !== "primary") : card.markers;
           if (card.id !== action.id) {
-            return { ...card, markers: withoutPrimary };
+            return card;
           }
-          const markers = withoutPrimary.includes(action.marker)
-            ? withoutPrimary.filter((marker) => marker !== action.marker)
-            : [...withoutPrimary, action.marker];
+          const markers = card.markers.includes(action.marker)
+            ? card.markers.filter((marker) => marker !== action.marker)
+            : [...card.markers, action.marker];
           return { ...card, markers };
         }),
         result: null
