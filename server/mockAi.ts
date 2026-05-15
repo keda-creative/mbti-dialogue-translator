@@ -15,6 +15,84 @@ import {
 
 const STRONG_SIGNAL_PATTERN = /太|不能|总是|从来|离谱|烦|失望|为什么/;
 const MANIPULATIVE_GOAL_PATTERN = /内疚|骗|操控|PUA|逼|让.*答应/;
+const REPLY_PATTERN = /不回|回复|消息|已读|联系/;
+const ADVANCE_NOTICE_PATTERN = /提前|每次|临时|安排|通知|告诉/;
+const BOUNDARY_PATTERN = /不行|不要|拒绝|边界|不能/;
+const RISK_PATTERN = /风险|问题|隐患|不稳|失控/;
+
+function buildInformationIntent(message: string): string {
+  if (RISK_PATTERN.test(message)) {
+    return "我想让对方知道，我对当前方案或决定里的风险有明确担心。";
+  }
+
+  if (REPLY_PATTERN.test(message)) {
+    return "我想让对方知道，回应不及时会让我感到不被重视或缺少确定感。";
+  }
+
+  if (ADVANCE_NOTICE_PATTERN.test(message)) {
+    return "我想让对方知道，临时变化或没有提前说明会影响我的安排。";
+  }
+
+  if (BOUNDARY_PATTERN.test(message)) {
+    return "我想表达一个真实的拒绝、限制或边界。";
+  }
+
+  return `我想让对方理解这句话背后的关键信息：「${message.slice(0, 28)}」。`;
+}
+
+function buildActionIntent(request: AnalyzeIntentRequest): string {
+  const message = request.originalMessage;
+
+  if (REPLY_PATTERN.test(message)) {
+    return "我希望对方回应我的感受，并一起确认更可预期的沟通节奏。";
+  }
+
+  if (ADVANCE_NOTICE_PATTERN.test(message)) {
+    return "我希望以后有变化时，对方可以提前告诉我。";
+  }
+
+  if (RISK_PATTERN.test(message)) {
+    return request.config.scenario === "work"
+      ? "我希望我们先确认风险、责任边界和下一步安排。"
+      : "我希望我们先把担心讲清楚，再一起决定怎么处理。";
+  }
+
+  if (BOUNDARY_PATTERN.test(message)) {
+    return "我希望对方尊重这个边界，并和我确认可接受的下一步。";
+  }
+
+  return "我希望对方先理解我的重点，再回应或一起决定下一步。";
+}
+
+function buildRelationshipIntent(request: AnalyzeIntentRequest): string {
+  switch (request.config.scenario) {
+    case "romantic":
+      return "我希望对方理解，我是在亲密关系里寻求连接和确定感，不是单纯指责。";
+    case "friends_family":
+      return "我希望家人或朋友理解，我在意的是被尊重和被提前告知。";
+    case "work":
+      return "我希望对方理解这是为了共同目标和协作质量，不是否定个人能力。";
+    case "general":
+      return "我希望对方理解我的真实立场，同时不要把这句话听成攻击。";
+    default:
+      return "我希望对方理解我的真实立场，同时不要把这句话听成攻击。";
+  }
+}
+
+function buildEmotionIntent(request: AnalyzeIntentRequest): string {
+  switch (request.config.scenario) {
+    case "romantic":
+      return "我有委屈、失落或不安，希望这份情绪被看见，但不变成互相拉扯。";
+    case "friends_family":
+      return "我有被打乱安排或没被尊重的感受，希望这份情绪能被理解。";
+    case "work":
+      return "我有担心和着急，希望这份情绪被理解但不要变成压力。";
+    case "general":
+      return "我有一部分情绪需要被理解，但不希望它盖过真正想说的事。";
+    default:
+      return "我有一部分情绪需要被理解，但不希望它盖过真正想说的事。";
+  }
+}
 
 export function mockAnalyzeIntents(
   request: AnalyzeIntentRequest
@@ -50,34 +128,29 @@ export function mockAnalyzeIntents(
   }
 
   const hasStrongSignal = STRONG_SIGNAL_PATTERN.test(parsed.originalMessage);
-  const riskFocused = /风险|问题|隐患|不稳|失控/.test(parsed.originalMessage);
   const hasBackground = Boolean(parsed.conversationBackground?.trim());
 
   const intentCards: AnalyzeIntentResponse["intentCards"] = [
     {
       id: "intent-1",
       type: "information",
-      content: riskFocused
-        ? hasBackground
-          ? "我想结合当前对话背景提醒方案风险。"
-          : "我想提醒方案风险。"
-        : "我想补充这句话背后的关键信息。",
+      content: hasBackground
+        ? `${buildInformationIntent(parsed.originalMessage)} 这和当前对话背景有关。`
+        : buildInformationIntent(parsed.originalMessage),
       confidence: "high",
       markers: ["primary"]
     },
     {
       id: "intent-2",
       type: "action",
-      content: hasBackground
-        ? "我希望我们结合前情复盘关键假设，再决定下一步。"
-        : "我希望我们先停下来复盘关键假设，再决定下一步。",
+      content: buildActionIntent(parsed),
       confidence: "medium",
       markers: []
     },
     {
       id: "intent-3",
       type: "relationship",
-      content: "我希望对方理解这是为了共同目标，不是否定他的能力。",
+      content: buildRelationshipIntent(parsed),
       confidence: "medium",
       markers: ["sensitive"]
     }
@@ -87,7 +160,7 @@ export function mockAnalyzeIntents(
     intentCards.push({
       id: "intent-4",
       type: "emotion",
-      content: "我有担心和着急，希望这份情绪被理解但不要变成压力。",
+      content: buildEmotionIntent(parsed),
       confidence: "medium",
       markers: ["softenable"]
     });

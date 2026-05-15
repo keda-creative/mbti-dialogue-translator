@@ -9,7 +9,7 @@ test("completes the mock translation workflow on desktop", async ({ page }) => {
 
   await page.getByRole("button", { name: "识别意图" }).click();
   await expect(page.getByText("确认真正想表达的意图")).toBeVisible();
-  await expect(page.getByText("我想提醒方案风险。")).toBeVisible();
+  await expect(page.getByText("风险有明确担心")).toBeVisible();
 
   await page.getByRole("button", { name: "生成翻译" }).click();
   await expect(page.getByText("可以复制发送的版本")).toBeVisible();

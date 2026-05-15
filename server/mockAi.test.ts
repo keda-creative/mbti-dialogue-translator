@@ -62,3 +62,34 @@ test("mock analysis redirects manipulative goals", () => {
 
   expect(response.safetyRedirect).toContain("真实需求");
 });
+
+test("mock analysis reflects the selected scenario and message content", () => {
+  const romantic = mockAnalyzeIntents({
+    config: { senderType: "ENFP", receiverType: "ISTJ", scenario: "romantic" },
+    conversationBackground: "昨晚因为回复消息吵了一架。",
+    originalMessage: "你总是不回我消息，我真的很失望。"
+  });
+  const family = mockAnalyzeIntents({
+    config: {
+      senderType: "ENFP",
+      receiverType: "ISTJ",
+      scenario: "friends_family"
+    },
+    conversationBackground: "妈妈临时改了周末安排。",
+    originalMessage: "你为什么每次都不提前跟我说？"
+  });
+
+  expect(romantic.intentCards.map((card) => card.content).join(" ")).toContain(
+    "回应"
+  );
+  expect(romantic.intentCards.map((card) => card.content).join(" ")).toContain(
+    "亲密"
+  );
+  expect(family.intentCards.map((card) => card.content).join(" ")).toContain(
+    "提前"
+  );
+  expect(family.intentCards.map((card) => card.content).join(" ")).toContain(
+    "家人"
+  );
+  expect(romantic.intentCards).not.toEqual(family.intentCards);
+});
