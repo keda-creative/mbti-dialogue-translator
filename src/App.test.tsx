@@ -14,12 +14,24 @@ beforeEach(() => {
   localStorage.clear();
 });
 
+test("loads the requested default values", () => {
+  render(<App />);
+
+  expect(screen.getByDisplayValue("INTJ")).toBeInTheDocument();
+  expect(screen.getByDisplayValue("ENFP")).toBeInTheDocument();
+  expect(screen.getByDisplayValue("亲密关系")).toBeInTheDocument();
+  expect(screen.getByLabelText("对话背景")).toHaveValue("最近在吵架");
+  expect(screen.getByLabelText("原话")).toHaveValue("我想你了");
+  expect(screen.getByRole("button", { name: "识别意图" })).toBeEnabled();
+});
+
 test("lets the user configure direction and type an original message", async () => {
   render(<App />);
 
   await userEvent.selectOptions(screen.getByLabelText("发送者 A"), "INTJ");
   await userEvent.selectOptions(screen.getByLabelText("接收者 B"), "ESFP");
   await userEvent.selectOptions(screen.getByLabelText("使用场景"), "romantic");
+  await userEvent.clear(screen.getByLabelText("原话"));
   await userEvent.type(screen.getByLabelText("原话"), "你这样让我很没有安全感。");
 
   expect(screen.getByDisplayValue("INTJ")).toBeInTheDocument();
@@ -45,6 +57,8 @@ test("sends optional conversation background with intent analysis", async () => 
 
   render(<App />);
 
+  await user.clear(screen.getByLabelText("对话背景"));
+  await user.clear(screen.getByLabelText("原话"));
   await user.type(screen.getByLabelText("对话背景"), "客户要求今天确认方案。");
   await user.type(screen.getByLabelText("原话"), "这个方案风险太高了。");
   await user.click(screen.getByRole("button", { name: "识别意图" }));
@@ -75,6 +89,7 @@ test("shows a clear recognized state after intent analysis succeeds", async () =
 
   render(<App />);
 
+  await user.clear(screen.getByLabelText("原话"));
   await user.type(screen.getByLabelText("原话"), "这个方案风险太高了。");
   await user.click(screen.getByRole("button", { name: "识别意图" }));
 
@@ -115,6 +130,7 @@ test("lets the user return to previous steps in the progressive workflow", async
 
   render(<App />);
 
+  await user.clear(screen.getByLabelText("原话"));
   await user.type(screen.getByLabelText("原话"), "你这个方案风险太高了。");
   await user.click(screen.getByRole("button", { name: "识别意图" }));
   expect(await screen.findByRole("button", { name: "生成翻译" })).toBeEnabled();
@@ -148,6 +164,7 @@ test("shows supplemental confirmation only after intent confirmation", async () 
 
   render(<App />);
 
+  await user.clear(screen.getByLabelText("原话"));
   await user.type(screen.getByLabelText("原话"), "你一直拖着不回复，我很着急。");
   await user.click(screen.getByRole("button", { name: "识别意图" }));
 
@@ -184,6 +201,7 @@ test("does not show clarifying questions after intent analysis", async () => {
 
   render(<App />);
 
+  await user.clear(screen.getByLabelText("原话"));
   await user.type(screen.getByLabelText("原话"), "这个方案风险太高了。");
   await user.click(screen.getByRole("button", { name: "识别意图" }));
 
@@ -224,6 +242,7 @@ test("ignores a stale intent response after the user changes the request input",
 
   render(<App />);
 
+  await user.clear(screen.getByLabelText("原话"));
   await user.type(screen.getByLabelText("原话"), "你这样让我很没有安全感。");
   await user.click(screen.getByRole("button", { name: "识别意图" }));
   await user.selectOptions(screen.getByLabelText("接收者 B"), "ESFP");
@@ -276,6 +295,7 @@ test("ignores a stale translation response after the user changes the message", 
 
   render(<App />);
 
+  await user.clear(screen.getByLabelText("原话"));
   await user.type(screen.getByLabelText("原话"), "你这个方案风险太高了。");
   await user.click(screen.getByRole("button", { name: "识别意图" }));
   expect(await screen.findByText("我想提醒方案风险。")).toBeInTheDocument();

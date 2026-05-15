@@ -49,13 +49,13 @@ function expectAnalysisReset(state: WorkflowState) {
   expect(state.error).toBeNull();
 }
 
-test("requires original message before intent analysis", () => {
-  expect(selectCanAnalyze(initialWorkflowState)).toBe(false);
+test("allows intent analysis from the default original message", () => {
+  expect(selectCanAnalyze(initialWorkflowState)).toBe(true);
   const state = reducer(initialWorkflowState, {
     type: "setOriginalMessage",
-    value: "不行"
+    value: ""
   });
-  expect(selectCanAnalyze(state)).toBe(true);
+  expect(selectCanAnalyze(state)).toBe(false);
 });
 
 test("requires a preserved intent before translation", () => {

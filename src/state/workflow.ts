@@ -17,12 +17,12 @@ export interface WorkflowState {
 
 export const initialWorkflowState: WorkflowState = {
   config: {
-    senderType: "ENFP",
-    receiverType: "ISTJ",
-    scenario: "work"
+    senderType: "INTJ",
+    receiverType: "ENFP",
+    scenario: "romantic"
   },
-  originalMessage: "",
-  conversationBackground: "",
+  originalMessage: "我想你了",
+  conversationBackground: "最近在吵架",
   intentCards: [],
   strengthApproved: false,
   isLoading: false,
