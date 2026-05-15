@@ -1,14 +1,16 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
-import { requestIntentCards } from "./lib/api";
+import { requestIntentCards, requestTranslation } from "./lib/api";
 
 vi.mock("./lib/api", () => ({
-  requestIntentCards: vi.fn()
+  requestIntentCards: vi.fn(),
+  requestTranslation: vi.fn()
 }));
 
 beforeEach(() => {
   vi.mocked(requestIntentCards).mockReset();
+  vi.mocked(requestTranslation).mockReset();
 });
 
 test("lets the user configure direction and type an original message", async () => {
@@ -60,4 +62,59 @@ test("ignores a stale intent response after the user changes the request input",
     expect(screen.getByRole("button", { name: "识别意图" })).toBeEnabled()
   );
   expect(screen.queryByText("旧请求安全提示")).not.toBeInTheDocument();
+});
+
+test("ignores a stale translation response after the user changes the message", async () => {
+  const user = userEvent.setup();
+  vi.mocked(requestIntentCards).mockResolvedValue({
+    intentCards: [
+      {
+        id: "intent-1",
+        type: "information",
+        content: "我想提醒方案风险。",
+        confidence: "high",
+        markers: ["primary"]
+      }
+    ],
+    clarifyingQuestions: [],
+    safetyRedirect: null
+  });
+
+  let resolveTranslation: (
+    value: Awaited<ReturnType<typeof requestTranslation>>
+  ) => void = () => {};
+  vi.mocked(requestTranslation).mockReturnValue(
+    new Promise((resolve) => {
+      resolveTranslation = resolve;
+    })
+  );
+
+  render(<App />);
+
+  await user.type(screen.getByLabelText("原话"), "你这个方案风险太高了。");
+  await user.click(screen.getByRole("button", { name: "识别意图" }));
+  expect(await screen.findByText("我想提醒方案风险。")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "生成翻译" }));
+  await user.type(screen.getByLabelText("原话"), "我补充了新的上下文。");
+
+  resolveTranslation({
+    translatedMessage: "旧请求生成的翻译",
+    mbtiExplanation: "考虑到 B 是 ISTJ，可能更容易接收事实清晰的表达。",
+    preservedIntents: ["我想提醒方案风险。"],
+    adjustedExpressions: ["保留表达强度"],
+    strategy: {
+      informationOrder: "先事实",
+      tone: "克制",
+      evidenceStyle: "事实",
+      relationshipSignal: "共同目标",
+      misunderstandingRisk: "可能先回应语气",
+      adjustments: []
+    }
+  });
+
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "识别意图" })).toBeEnabled()
+  );
+  expect(screen.queryByText("旧请求生成的翻译")).not.toBeInTheDocument();
 });

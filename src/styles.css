@@ -97,7 +97,13 @@ textarea {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+  gap: 16px;
+}
+
+.flow-column {
+  display: grid;
   gap: 16px;
 }
 
@@ -268,6 +274,74 @@ textarea {
   color: #803824;
 }
 
+.strategy-panel {
+  position: sticky;
+  top: 20px;
+  border: 1px solid #d8d5c9;
+  background: #fffdfa;
+  padding: 18px;
+}
+
+.strategy-panel h2 {
+  margin: 4px 0 10px;
+  font-size: 1.1rem;
+  letter-spacing: 0;
+}
+
+.strategy-panel p,
+.strategy-panel dd {
+  color: #59645d;
+  line-height: 1.6;
+}
+
+.strategy-panel dl {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 0;
+}
+
+.strategy-panel dt {
+  color: #2d4d42;
+  font-weight: 700;
+}
+
+.strategy-panel dd {
+  margin: 4px 0 0;
+}
+
+.translated-message {
+  white-space: pre-wrap;
+  border: 1px solid #c9d6ce;
+  background: #f8fbf8;
+  padding: 16px;
+  line-height: 1.8;
+}
+
+.icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.result-grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.result-grid h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.result-grid p,
+.result-grid li {
+  color: #59645d;
+  line-height: 1.7;
+}
+
 @media (max-width: 720px) {
   .app-shell {
     padding: 20px;
@@ -275,5 +349,16 @@ textarea {
 
   .config-bar {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 980px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .strategy-panel {
+    position: static;
+    order: -1;
   }
 }
