@@ -1,4 +1,4 @@
-import { useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { ClarifyingQuestions } from "./components/ClarifyingQuestions";
 import { ConfigBar } from "./components/ConfigBar";
 import { IntentCards } from "./components/IntentCards";
@@ -12,12 +12,16 @@ import {
   initialWorkflowState,
   reducer,
   selectCanAnalyze,
-  selectCanTranslate
+  selectCanTranslate,
+  type WorkflowState
 } from "./state/workflow";
+
+const DRAFT_STORAGE_KEY = "mbti-dialogue-translator-draft";
 
 interface AnalysisRequestSnapshot {
   config: TranslatorConfig;
   originalMessage: string;
+  conversationBackground: string;
 }
 
 interface TranslationRequestSnapshot extends AnalysisRequestSnapshot {
@@ -42,18 +46,60 @@ function serializeAnswers(answers: Record<string, string>): string {
   return JSON.stringify(answers);
 }
 
+function readDraftState(): WorkflowState {
+  if (typeof window === "undefined") {
+    return initialWorkflowState;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!stored) {
+      return initialWorkflowState;
+    }
+
+    const parsed = JSON.parse(stored) as Partial<WorkflowState>;
+    return {
+      ...initialWorkflowState,
+      conversationBackground:
+        typeof parsed.conversationBackground === "string"
+          ? parsed.conversationBackground
+          : "",
+      originalMessage:
+        typeof parsed.originalMessage === "string" ? parsed.originalMessage : ""
+    };
+  } catch {
+    return initialWorkflowState;
+  }
+}
+
+function writeDraftState(state: WorkflowState) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(
+    DRAFT_STORAGE_KEY,
+    JSON.stringify({
+      conversationBackground: state.conversationBackground,
+      originalMessage: state.originalMessage
+    })
+  );
+}
+
 export default function App() {
-  const [state, dispatch] = useReducer(reducer, initialWorkflowState);
+  const [state, dispatch] = useReducer(reducer, undefined, readDraftState);
   const hasSoftenableIntent = state.intentCards.some((card) =>
     card.markers.includes("softenable")
   );
   const latestInputRef = useRef<AnalysisRequestSnapshot>({
     config: state.config,
-    originalMessage: state.originalMessage
+    originalMessage: state.originalMessage,
+    conversationBackground: state.conversationBackground
   });
   const latestTranslationInputRef = useRef<TranslationRequestSnapshot>({
     config: state.config,
     originalMessage: state.originalMessage,
+    conversationBackground: state.conversationBackground,
     intentCards: state.intentCards,
     clarificationAnswers: state.clarificationAnswers,
     strengthApproved: state.strengthApproved
@@ -63,15 +109,21 @@ export default function App() {
 
   latestInputRef.current = {
     config: state.config,
-    originalMessage: state.originalMessage
+    originalMessage: state.originalMessage,
+    conversationBackground: state.conversationBackground
   };
   latestTranslationInputRef.current = {
     config: state.config,
     originalMessage: state.originalMessage,
+    conversationBackground: state.conversationBackground,
     intentCards: state.intentCards,
     clarificationAnswers: state.clarificationAnswers,
     strengthApproved: state.strengthApproved
   };
+
+  useEffect(() => {
+    writeDraftState(state);
+  }, [state.conversationBackground, state.originalMessage]);
 
   function isCurrentAnalysisRequest(
     requestId: number,
@@ -81,6 +133,7 @@ export default function App() {
     return (
       activeAnalysisRequestIdRef.current === requestId &&
       latestInput.originalMessage === request.originalMessage &&
+      latestInput.conversationBackground === request.conversationBackground &&
       configsMatch(latestInput.config, request.config)
     );
   }
@@ -93,6 +146,7 @@ export default function App() {
     return (
       activeTranslationRequestIdRef.current === requestId &&
       latestInput.originalMessage === request.originalMessage &&
+      latestInput.conversationBackground === request.conversationBackground &&
       latestInput.strengthApproved === request.strengthApproved &&
       configsMatch(latestInput.config, request.config) &&
       serializeIntentCards(latestInput.intentCards) ===
@@ -105,7 +159,8 @@ export default function App() {
   async function analyze() {
     const request = {
       config: state.config,
-      originalMessage: state.originalMessage
+      originalMessage: state.originalMessage,
+      conversationBackground: state.conversationBackground
     };
     const requestId = activeAnalysisRequestIdRef.current + 1;
     activeAnalysisRequestIdRef.current = requestId;
@@ -152,6 +207,7 @@ export default function App() {
     const request = {
       config: state.config,
       originalMessage: state.originalMessage,
+      conversationBackground: state.conversationBackground,
       intentCards: state.intentCards,
       clarificationAnswers: state.clarificationAnswers,
       strengthApproved: state.strengthApproved
@@ -209,9 +265,14 @@ export default function App() {
         <div className="flow-column">
           <OriginalMessage
             value={state.originalMessage}
+            conversationBackground={state.conversationBackground}
             canAnalyze={selectCanAnalyze(state)}
             isLoading={state.isLoading}
+            hasAnalysis={state.intentCards.length > 0}
             onChange={(value) => dispatch({ type: "setOriginalMessage", value })}
+            onBackgroundChange={(value) =>
+              dispatch({ type: "setConversationBackground", value })
+            }
             onAnalyze={analyze}
           />
           <IntentCards

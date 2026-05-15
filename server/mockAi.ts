@@ -51,13 +51,16 @@ export function mockAnalyzeIntents(
 
   const hasStrongSignal = STRONG_SIGNAL_PATTERN.test(parsed.originalMessage);
   const riskFocused = /风险|问题|隐患|不稳|失控/.test(parsed.originalMessage);
+  const hasBackground = Boolean(parsed.conversationBackground?.trim());
 
   const intentCards: AnalyzeIntentResponse["intentCards"] = [
     {
       id: "intent-1",
       type: "information",
       content: riskFocused
-        ? "我想提醒方案风险。"
+        ? hasBackground
+          ? "我想结合当前对话背景提醒方案风险。"
+          : "我想提醒方案风险。"
         : "我想补充这句话背后的关键信息。",
       confidence: "high",
       markers: ["primary"]
@@ -65,7 +68,9 @@ export function mockAnalyzeIntents(
     {
       id: "intent-2",
       type: "action",
-      content: "我希望我们先停下来复盘关键假设，再决定下一步。",
+      content: hasBackground
+        ? "我希望我们结合前情复盘关键假设，再决定下一步。"
+        : "我希望我们先停下来复盘关键假设，再决定下一步。",
       confidence: "medium",
       markers: []
     },

@@ -11,6 +11,7 @@ vi.mock("./lib/api", () => ({
 beforeEach(() => {
   vi.mocked(requestIntentCards).mockReset();
   vi.mocked(requestTranslation).mockReset();
+  localStorage.clear();
 });
 
 test("lets the user configure direction and type an original message", async () => {
@@ -23,6 +24,81 @@ test("lets the user configure direction and type an original message", async () 
 
   expect(screen.getByDisplayValue("INTJ")).toBeInTheDocument();
   expect(screen.getByDisplayValue("ESFP")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "识别意图" })).toBeEnabled();
+});
+
+test("sends optional conversation background with intent analysis", async () => {
+  const user = userEvent.setup();
+  vi.mocked(requestIntentCards).mockResolvedValue({
+    intentCards: [
+      {
+        id: "intent-1",
+        type: "information",
+        content: "我想提醒方案风险。",
+        confidence: "high",
+        markers: ["primary"]
+      }
+    ],
+    clarifyingQuestions: [],
+    safetyRedirect: null
+  });
+
+  render(<App />);
+
+  await user.type(screen.getByLabelText("对话背景"), "客户要求今天确认方案。");
+  await user.type(screen.getByLabelText("原话"), "这个方案风险太高了。");
+  await user.click(screen.getByRole("button", { name: "识别意图" }));
+
+  expect(requestIntentCards).toHaveBeenCalledWith(
+    expect.objectContaining({
+      conversationBackground: "客户要求今天确认方案。",
+      originalMessage: "这个方案风险太高了。"
+    })
+  );
+});
+
+test("shows a clear recognized state after intent analysis succeeds", async () => {
+  const user = userEvent.setup();
+  vi.mocked(requestIntentCards).mockResolvedValue({
+    intentCards: [
+      {
+        id: "intent-1",
+        type: "information",
+        content: "我想提醒方案风险。",
+        confidence: "high",
+        markers: ["primary"]
+      }
+    ],
+    clarifyingQuestions: [],
+    safetyRedirect: null
+  });
+
+  render(<App />);
+
+  await user.type(screen.getByLabelText("原话"), "这个方案风险太高了。");
+  await user.click(screen.getByRole("button", { name: "识别意图" }));
+
+  expect(await screen.findByText("已识别")).toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: "重新识别意图" })
+  ).toBeEnabled();
+});
+
+test("restores draft text after refresh so the analyze button remains usable", () => {
+  localStorage.setItem(
+    "mbti-dialogue-translator-draft",
+    JSON.stringify({
+      conversationBackground: "昨晚刚和对方讨论过预算。",
+      originalMessage: "这个方案风险太高了。"
+    })
+  );
+
+  render(<App />);
+
+  expect(screen.getByLabelText("对话背景")).toHaveValue(
+    "昨晚刚和对方讨论过预算。"
+  );
+  expect(screen.getByLabelText("原话")).toHaveValue("这个方案风险太高了。");
   expect(screen.getByRole("button", { name: "识别意图" })).toBeEnabled();
 });
 

@@ -21,7 +21,8 @@ function buildBaseUserData(request: AnalyzeIntentRequest | TranslationRequest) {
     scenario: request.config.scenario,
     config: request.config,
     scenarioLabel: getScenarioLabel(request),
-    originalMessage: request.originalMessage
+    originalMessage: request.originalMessage,
+    conversationBackground: request.conversationBackground?.trim() || null
   };
 }
 

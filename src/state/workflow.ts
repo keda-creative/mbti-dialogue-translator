@@ -9,6 +9,7 @@ import type {
 export interface WorkflowState {
   config: TranslatorConfig;
   originalMessage: string;
+  conversationBackground: string;
   intentCards: IntentCard[];
   clarifyingQuestions: ClarifyingQuestion[];
   clarificationAnswers: Record<string, string>;
@@ -25,6 +26,7 @@ export const initialWorkflowState: WorkflowState = {
     scenario: "work"
   },
   originalMessage: "",
+  conversationBackground: "",
   intentCards: [],
   clarifyingQuestions: [],
   clarificationAnswers: {},
@@ -37,6 +39,7 @@ export const initialWorkflowState: WorkflowState = {
 export type WorkflowAction =
   | { type: "setConfig"; config: TranslatorConfig }
   | { type: "setOriginalMessage"; value: string }
+  | { type: "setConversationBackground"; value: string }
   | { type: "setIntentCards"; cards: IntentCard[]; questions: ClarifyingQuestion[] }
   | { type: "updateIntentContent"; id: string; content: string }
   | { type: "deleteIntent"; id: string }
@@ -75,6 +78,8 @@ export function reducer(state: WorkflowState, action: WorkflowAction): WorkflowS
       return resetAnalysis({ ...state, config: action.config });
     case "setOriginalMessage":
       return resetAnalysis({ ...state, originalMessage: action.value });
+    case "setConversationBackground":
+      return resetAnalysis({ ...state, conversationBackground: action.value });
     case "setIntentCards":
       return {
         ...state,
