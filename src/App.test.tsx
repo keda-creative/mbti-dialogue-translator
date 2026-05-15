@@ -78,10 +78,56 @@ test("shows a clear recognized state after intent analysis succeeds", async () =
   await user.type(screen.getByLabelText("原话"), "这个方案风险太高了。");
   await user.click(screen.getByRole("button", { name: "识别意图" }));
 
-  expect(await screen.findByText("已识别")).toBeInTheDocument();
-  expect(
-    screen.getByRole("button", { name: "重新识别意图" })
-  ).toBeEnabled();
+  expect(await screen.findByText("已识别这段原话")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "返回修改原话" })).toBeEnabled();
+  expect(screen.queryByLabelText("原话")).not.toBeInTheDocument();
+});
+
+test("lets the user return to previous steps in the progressive workflow", async () => {
+  const user = userEvent.setup();
+  vi.mocked(requestIntentCards).mockResolvedValue({
+    intentCards: [
+      {
+        id: "intent-1",
+        type: "information",
+        content: "我想提醒方案风险。",
+        confidence: "high",
+        markers: ["primary"]
+      }
+    ],
+    clarifyingQuestions: [],
+    safetyRedirect: null
+  });
+  vi.mocked(requestTranslation).mockResolvedValue({
+    translatedMessage: "建议我们先评估这个方案的关键风险，再决定是否继续推进。",
+    mbtiExplanation: "考虑到 B 是 ISTJ，可能更容易接收事实清晰的表达。",
+    preservedIntents: ["我想提醒方案风险。"],
+    adjustedExpressions: ["保留表达强度"],
+    strategy: {
+      informationOrder: "先事实",
+      tone: "克制",
+      evidenceStyle: "事实",
+      relationshipSignal: "共同目标",
+      misunderstandingRisk: "可能先回应语气",
+      adjustments: []
+    }
+  });
+
+  render(<App />);
+
+  await user.type(screen.getByLabelText("原话"), "你这个方案风险太高了。");
+  await user.click(screen.getByRole("button", { name: "识别意图" }));
+  expect(await screen.findByRole("button", { name: "生成翻译" })).toBeEnabled();
+
+  await user.click(screen.getByRole("button", { name: "生成翻译" }));
+  expect(await screen.findByText("已确认 1 个意图")).toBeInTheDocument();
+  expect(screen.getByText("可以复制发送的版本")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "返回修改意图" }));
+  expect(screen.getByText("确认真正想表达的意图")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "返回修改原话" }));
+  expect(screen.getByLabelText("原话")).toHaveValue("你这个方案风险太高了。");
 });
 
 test("does not show clarifying questions after intent analysis", async () => {
@@ -205,6 +251,7 @@ test("ignores a stale translation response after the user changes the message", 
   expect(await screen.findByText("我想提醒方案风险。")).toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "生成翻译" }));
+  await user.click(screen.getByRole("button", { name: "返回修改原话" }));
   await user.type(screen.getByLabelText("原话"), "我补充了新的上下文。");
 
   resolveTranslation({

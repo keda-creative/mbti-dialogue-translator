@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { ConfigBar } from "./components/ConfigBar";
 import { IntentCards } from "./components/IntentCards";
 import { OriginalMessage } from "./components/OriginalMessage";
@@ -11,11 +11,13 @@ import {
   initialWorkflowState,
   reducer,
   selectCanAnalyze,
+  selectPrimaryIntent,
   selectCanTranslate,
   type WorkflowState
 } from "./state/workflow";
 
 const DRAFT_STORAGE_KEY = "mbti-dialogue-translator-draft";
+type WorkflowStep = "input" | "intent" | "result";
 
 interface AnalysisRequestSnapshot {
   config: TranslatorConfig;
@@ -80,11 +82,27 @@ function writeDraftState(state: WorkflowState) {
   );
 }
 
+function formatPreview(value: string, fallback: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+  return trimmed.length > 72 ? `${trimmed.slice(0, 72)}...` : trimmed;
+}
+
 export default function App() {
   const [state, dispatch] = useReducer(reducer, undefined, readDraftState);
+  const [activeStep, setActiveStep] = useState<WorkflowStep>("input");
   const hasSoftenableIntent = state.intentCards.some((card) =>
     card.markers.includes("softenable")
   );
+  const primaryIntent = selectPrimaryIntent(state);
+  const currentStep: WorkflowStep =
+    activeStep === "result" && state.result
+      ? "result"
+      : activeStep === "intent" && state.intentCards.length > 0
+        ? "intent"
+        : "input";
   const latestInputRef = useRef<AnalysisRequestSnapshot>({
     config: state.config,
     originalMessage: state.originalMessage,
@@ -169,6 +187,7 @@ export default function App() {
         type: "setIntentCards",
         cards: response.intentCards
       });
+      setActiveStep("intent");
 
       if (response.safetyRedirect) {
         dispatch({ type: "setError", value: response.safetyRedirect });
@@ -214,6 +233,7 @@ export default function App() {
       }
 
       dispatch({ type: "setResult", result });
+      setActiveStep("result");
     } catch (error) {
       if (!isCurrentTranslationRequest(requestId, request)) {
         return;
@@ -242,7 +262,10 @@ export default function App() {
       </section>
       <ConfigBar
         config={state.config}
-        onChange={(config) => dispatch({ type: "setConfig", config })}
+        onChange={(config) => {
+          setActiveStep("input");
+          dispatch({ type: "setConfig", config });
+        }}
       />
       {state.error ? (
         <div className="error-banner" role="alert">
@@ -251,48 +274,103 @@ export default function App() {
       ) : null}
       <div className="workspace">
         <div className="flow-column">
-          <OriginalMessage
-            value={state.originalMessage}
-            conversationBackground={state.conversationBackground}
-            canAnalyze={selectCanAnalyze(state)}
-            isLoading={state.isLoading}
-            hasAnalysis={state.intentCards.length > 0}
-            onChange={(value) => dispatch({ type: "setOriginalMessage", value })}
-            onBackgroundChange={(value) =>
-              dispatch({ type: "setConversationBackground", value })
-            }
-            onAnalyze={analyze}
-          />
-          <IntentCards
-            cards={state.intentCards}
-            canTranslate={selectCanTranslate(state)}
-            onUpdate={(id, content) =>
-              dispatch({ type: "updateIntentContent", id, content })
-            }
-            onDelete={(id) => dispatch({ type: "deleteIntent", id })}
-            onToggle={(id, marker) =>
-              dispatch({ type: "toggleMarker", id, marker })
-            }
-          />
-          {hasSoftenableIntent ? (
-            <StrengthGate
-              approved={state.strengthApproved}
-              onChange={(value) =>
-                dispatch({ type: "setStrengthApproved", value })
-              }
+          {currentStep === "input" ? (
+            <OriginalMessage
+              value={state.originalMessage}
+              conversationBackground={state.conversationBackground}
+              canAnalyze={selectCanAnalyze(state)}
+              isLoading={state.isLoading}
+              hasAnalysis={state.intentCards.length > 0}
+              onChange={(value) => {
+                setActiveStep("input");
+                dispatch({ type: "setOriginalMessage", value });
+              }}
+              onBackgroundChange={(value) => {
+                setActiveStep("input");
+                dispatch({ type: "setConversationBackground", value });
+              }}
+              onAnalyze={analyze}
             />
+          ) : (
+            <section className="panel step-summary">
+              <div>
+                <p className="step-label">01 原话输入</p>
+                <h2>已识别这段原话</h2>
+                <p>{formatPreview(state.originalMessage, "还没有填写原话。")}</p>
+                {state.conversationBackground.trim() ? (
+                  <small>
+                    背景：{formatPreview(state.conversationBackground, "")}
+                  </small>
+                ) : null}
+              </div>
+              <button
+                className="secondary-action"
+                type="button"
+                onClick={() => setActiveStep("input")}
+              >
+                返回修改原话
+              </button>
+            </section>
+          )}
+          {currentStep === "intent" ? (
+            <>
+              <IntentCards
+                cards={state.intentCards}
+                canTranslate={selectCanTranslate(state)}
+                onUpdate={(id, content) => {
+                  setActiveStep("intent");
+                  dispatch({ type: "updateIntentContent", id, content });
+                }}
+                onDelete={(id) => {
+                  setActiveStep("intent");
+                  dispatch({ type: "deleteIntent", id });
+                }}
+                onToggle={(id, marker) => {
+                  setActiveStep("intent");
+                  dispatch({ type: "toggleMarker", id, marker });
+                }}
+              />
+              {hasSoftenableIntent ? (
+                <StrengthGate
+                  approved={state.strengthApproved}
+                  onChange={(value) => {
+                    setActiveStep("intent");
+                    dispatch({ type: "setStrengthApproved", value });
+                  }}
+                />
+              ) : null}
+              <button
+                className="primary-action"
+                type="button"
+                disabled={!selectCanTranslate(state) || state.isLoading}
+                onClick={translate}
+              >
+                {state.isLoading ? "生成中..." : "生成翻译"}
+              </button>
+            </>
           ) : null}
-          {state.intentCards.length > 0 ? (
-            <button
-              className="primary-action"
-              type="button"
-              disabled={!selectCanTranslate(state) || state.isLoading}
-              onClick={translate}
-            >
-              {state.isLoading ? "生成中..." : "生成翻译"}
-            </button>
+          {currentStep === "result" ? (
+            <>
+              <section className="panel step-summary">
+                <div>
+                  <p className="step-label">02 意图确认</p>
+                  <h2>已确认 {state.intentCards.length} 个意图</h2>
+                  <p>
+                    主意图：
+                    {formatPreview(primaryIntent?.content ?? "", "尚未选择主意图")}
+                  </p>
+                </div>
+                <button
+                  className="secondary-action"
+                  type="button"
+                  onClick={() => setActiveStep("intent")}
+                >
+                  返回修改意图
+                </button>
+              </section>
+              <TranslationResult result={state.result} />
+            </>
           ) : null}
-          <TranslationResult result={state.result} />
         </div>
         <StrategyPanel
           config={state.config}

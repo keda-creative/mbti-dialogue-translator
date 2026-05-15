@@ -19,7 +19,7 @@ export function TranslationResult({ result }: TranslationResultProps) {
   return (
     <section className="panel result-panel">
       <div className="panel-heading">
-        <p className="step-label">05 翻译结果</p>
+        <p className="step-label">03 翻译结果</p>
         <h2>可以复制发送的版本</h2>
       </div>
       <div className="translated-message">{result.translatedMessage}</div>

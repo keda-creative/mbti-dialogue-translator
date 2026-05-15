@@ -63,12 +63,30 @@ type IntentTypeOption = Readonly<{
 }>;
 
 const intentTypeContent: Record<IntentType, Omit<IntentTypeOption, "id">> = {
-  information: { label: "信息意图", helper: "我想让对方知道什么事实、背景或判断。" },
-  action: { label: "行动意图", helper: "我希望对方接下来做什么或停止做什么。" },
-  outcome: { label: "结果意图", helper: "我希望沟通之后达成什么状态。" },
-  relationship: { label: "关系意图", helper: "我希望对方如何理解我和 TA 的关系。" },
-  emotion: { label: "情绪意图", helper: "我希望自己的情绪被怎样理解。" },
-  reverse: { label: "反向意图", helper: "我最不希望对方误会成什么。" }
+  information: {
+    label: "信息意图",
+    helper: "想让对方知道的事实、背景、判断或担心。"
+  },
+  action: {
+    label: "行为意图",
+    helper: "希望对方接下来做什么、停止做什么，或给出什么回应。"
+  },
+  outcome: {
+    label: "结果意图",
+    helper: "希望这次沟通最后达成的状态或决定。"
+  },
+  relationship: {
+    label: "关系意图",
+    helper: "希望对方如何理解你们之间的关系、边界或在乎。"
+  },
+  emotion: {
+    label: "情绪意图",
+    helper: "希望对方理解你的感受，不一定等于要求对方立刻行动。"
+  },
+  reverse: {
+    label: "反向意图",
+    helper: "最不希望对方误会成的意思。"
+  }
 };
 
 export const INTENT_TYPES: ReadonlyArray<IntentTypeOption> = INTENT_TYPE_IDS.map((id) => ({

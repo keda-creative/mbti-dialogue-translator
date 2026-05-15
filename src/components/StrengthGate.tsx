@@ -7,7 +7,7 @@ export function StrengthGate({ approved, onChange }: StrengthGateProps) {
   return (
     <section className="panel">
       <div className="panel-heading">
-        <p className="step-label">04 表达强度</p>
+        <p className="step-label">02 补充确认</p>
         <h2>表达强度确认</h2>
       </div>
       <p className="gate-copy">

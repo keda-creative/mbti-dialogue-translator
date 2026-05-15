@@ -123,6 +123,13 @@ textarea {
   letter-spacing: 0;
 }
 
+.panel-intro {
+  max-width: 720px;
+  margin: 8px 0 0;
+  color: #59645d;
+  line-height: 1.6;
+}
+
 .step-label {
   margin: 0;
   color: #687469;
@@ -191,12 +198,21 @@ textarea {
 .intent-card-header {
   justify-content: space-between;
   gap: 12px;
+  align-items: flex-start;
 }
 
 .intent-type {
+  display: inline-flex;
   color: #245e4f;
   font-size: 0.85rem;
   font-weight: 700;
+}
+
+.intent-helper {
+  margin: 6px 0 0;
+  color: #59645d;
+  font-size: 0.86rem;
+  line-height: 1.5;
 }
 
 .icon-button {
@@ -218,12 +234,14 @@ textarea {
 }
 
 .marker-row {
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .marker {
   min-height: 34px;
+  width: 100%;
   padding: 0 12px;
   border: 1px solid #c8cfc6;
   border-radius: 6px;
@@ -237,6 +255,18 @@ textarea {
   background: #e8f3ee;
   color: #184739;
   font-weight: 700;
+}
+
+.marker-control {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.marker-control small {
+  color: #687469;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .hint {
@@ -272,6 +302,42 @@ textarea {
   background: #245e4f;
   color: #ffffff;
   cursor: pointer;
+}
+
+.secondary-action {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #c8cfc6;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #245e4f;
+  cursor: pointer;
+}
+
+.step-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.step-summary h2 {
+  margin: 4px 0 8px;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.step-summary p {
+  margin: 0;
+  color: #59645d;
+  line-height: 1.6;
+}
+
+.step-summary small {
+  display: block;
+  margin-top: 8px;
+  color: #687469;
+  line-height: 1.5;
 }
 
 .primary-action:disabled {
@@ -367,6 +433,15 @@ textarea {
 
   .intent-list {
     grid-template-columns: 1fr;
+  }
+
+  .marker-row,
+  .step-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .step-summary {
+    display: grid;
   }
 }
 
