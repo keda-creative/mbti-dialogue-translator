@@ -1,5 +1,4 @@
 import { useEffect, useReducer, useRef } from "react";
-import { ClarifyingQuestions } from "./components/ClarifyingQuestions";
 import { ConfigBar } from "./components/ConfigBar";
 import { IntentCards } from "./components/IntentCards";
 import { OriginalMessage } from "./components/OriginalMessage";
@@ -25,7 +24,6 @@ interface AnalysisRequestSnapshot {
 }
 
 interface TranslationRequestSnapshot extends AnalysisRequestSnapshot {
-  clarificationAnswers: Record<string, string>;
   intentCards: IntentCard[];
   strengthApproved: boolean;
 }
@@ -40,10 +38,6 @@ function configsMatch(left: TranslatorConfig, right: TranslatorConfig): boolean 
 
 function serializeIntentCards(cards: IntentCard[]): string {
   return JSON.stringify(cards);
-}
-
-function serializeAnswers(answers: Record<string, string>): string {
-  return JSON.stringify(answers);
 }
 
 function readDraftState(): WorkflowState {
@@ -101,7 +95,6 @@ export default function App() {
     originalMessage: state.originalMessage,
     conversationBackground: state.conversationBackground,
     intentCards: state.intentCards,
-    clarificationAnswers: state.clarificationAnswers,
     strengthApproved: state.strengthApproved
   });
   const activeAnalysisRequestIdRef = useRef(0);
@@ -117,7 +110,6 @@ export default function App() {
     originalMessage: state.originalMessage,
     conversationBackground: state.conversationBackground,
     intentCards: state.intentCards,
-    clarificationAnswers: state.clarificationAnswers,
     strengthApproved: state.strengthApproved
   };
 
@@ -150,9 +142,7 @@ export default function App() {
       latestInput.strengthApproved === request.strengthApproved &&
       configsMatch(latestInput.config, request.config) &&
       serializeIntentCards(latestInput.intentCards) ===
-        serializeIntentCards(request.intentCards) &&
-      serializeAnswers(latestInput.clarificationAnswers) ===
-        serializeAnswers(request.clarificationAnswers)
+        serializeIntentCards(request.intentCards)
     );
   }
 
@@ -177,8 +167,7 @@ export default function App() {
 
       dispatch({
         type: "setIntentCards",
-        cards: response.intentCards,
-        questions: response.clarifyingQuestions
+        cards: response.intentCards
       });
 
       if (response.safetyRedirect) {
@@ -209,7 +198,6 @@ export default function App() {
       originalMessage: state.originalMessage,
       conversationBackground: state.conversationBackground,
       intentCards: state.intentCards,
-      clarificationAnswers: state.clarificationAnswers,
       strengthApproved: state.strengthApproved
     };
     const requestId = activeTranslationRequestIdRef.current + 1;
@@ -284,13 +272,6 @@ export default function App() {
             onDelete={(id) => dispatch({ type: "deleteIntent", id })}
             onToggle={(id, marker) =>
               dispatch({ type: "toggleMarker", id, marker })
-            }
-          />
-          <ClarifyingQuestions
-            questions={state.clarifyingQuestions}
-            answers={state.clarificationAnswers}
-            onChange={(id, value) =>
-              dispatch({ type: "setClarificationAnswer", id, value })
             }
           />
           {hasSoftenableIntent ? (

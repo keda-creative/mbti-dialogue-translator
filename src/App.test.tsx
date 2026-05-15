@@ -84,6 +84,39 @@ test("shows a clear recognized state after intent analysis succeeds", async () =
   ).toBeEnabled();
 });
 
+test("does not show clarifying questions after intent analysis", async () => {
+  const user = userEvent.setup();
+  vi.mocked(requestIntentCards).mockResolvedValue({
+    intentCards: [
+      {
+        id: "intent-1",
+        type: "information",
+        content: "我想提醒方案风险。",
+        confidence: "high",
+        markers: ["primary"]
+      }
+    ],
+    clarifyingQuestions: [
+      {
+        id: "clarify-1",
+        question: "你希望保留强烈语气吗？",
+        reason: "原话包含较强表达。"
+      }
+    ],
+    safetyRedirect: null
+  });
+
+  render(<App />);
+
+  await user.type(screen.getByLabelText("原话"), "这个方案风险太高了。");
+  await user.click(screen.getByRole("button", { name: "识别意图" }));
+
+  expect(await screen.findByText("我想提醒方案风险。")).toBeInTheDocument();
+  expect(screen.queryByText("03 补充上下文")).not.toBeInTheDocument();
+  expect(screen.queryByText("你希望保留强烈语气吗？")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "生成翻译" })).toBeEnabled();
+});
+
 test("restores draft text after refresh so the analyze button remains usable", () => {
   localStorage.setItem(
     "mbti-dialogue-translator-draft",

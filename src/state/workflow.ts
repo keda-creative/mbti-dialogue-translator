@@ -1,5 +1,4 @@
 import type {
-  ClarifyingQuestion,
   IntentCard,
   IntentMarker,
   TranslationResult,
@@ -11,8 +10,6 @@ export interface WorkflowState {
   originalMessage: string;
   conversationBackground: string;
   intentCards: IntentCard[];
-  clarifyingQuestions: ClarifyingQuestion[];
-  clarificationAnswers: Record<string, string>;
   strengthApproved: boolean;
   isLoading: boolean;
   error: string | null;
@@ -28,8 +25,6 @@ export const initialWorkflowState: WorkflowState = {
   originalMessage: "",
   conversationBackground: "",
   intentCards: [],
-  clarifyingQuestions: [],
-  clarificationAnswers: {},
   strengthApproved: false,
   isLoading: false,
   error: null,
@@ -40,11 +35,10 @@ export type WorkflowAction =
   | { type: "setConfig"; config: TranslatorConfig }
   | { type: "setOriginalMessage"; value: string }
   | { type: "setConversationBackground"; value: string }
-  | { type: "setIntentCards"; cards: IntentCard[]; questions: ClarifyingQuestion[] }
+  | { type: "setIntentCards"; cards: IntentCard[] }
   | { type: "updateIntentContent"; id: string; content: string }
   | { type: "deleteIntent"; id: string }
   | { type: "toggleMarker"; id: string; marker: IntentMarker }
-  | { type: "setClarificationAnswer"; id: string; value: string }
   | { type: "setStrengthApproved"; value: boolean }
   | { type: "setLoading"; value: boolean }
   | { type: "setError"; value: string | null }
@@ -58,8 +52,6 @@ function resetAnalysis(state: WorkflowState): WorkflowState {
   return {
     ...state,
     intentCards: [],
-    clarifyingQuestions: [],
-    clarificationAnswers: {},
     strengthApproved: false,
     error: null,
     result: null
@@ -84,8 +76,6 @@ export function reducer(state: WorkflowState, action: WorkflowAction): WorkflowS
       return {
         ...state,
         intentCards: action.cards.map((card) => ({ ...card, markers: [...card.markers] })),
-        clarifyingQuestions: action.questions,
-        clarificationAnswers: {},
         strengthApproved: false,
         result: null
       };
@@ -158,12 +148,6 @@ export function reducer(state: WorkflowState, action: WorkflowAction): WorkflowS
         result: null
       };
     }
-    case "setClarificationAnswer":
-      return {
-        ...state,
-        clarificationAnswers: { ...state.clarificationAnswers, [action.id]: action.value },
-        result: null
-      };
     case "setStrengthApproved":
       return { ...state, strengthApproved: action.value, result: null };
     case "setLoading":

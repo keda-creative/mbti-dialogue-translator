@@ -126,7 +126,7 @@ const intentAnalysisFormat: JsonSchemaFormat = {
       },
       clarifyingQuestions: {
         type: "array",
-        maxItems: 3,
+        maxItems: 0,
         items: clarifyingQuestionSchema
       },
       safetyRedirect: {
@@ -223,13 +223,7 @@ function getDeepSeekJsonExample(format: JsonSchemaFormat): string {
             markers: []
           }
         ],
-        clarifyingQuestions: [
-          {
-            id: "clarify-1",
-            question: "你希望保留原话里的强烈语气吗？",
-            reason: "原话可能包含较强情绪，需要确认是否保留强度。"
-          }
-        ],
+        clarifyingQuestions: [],
         safetyRedirect: null
       },
       null,

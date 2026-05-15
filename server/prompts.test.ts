@@ -28,7 +28,6 @@ test("translation prompt treats original message as JSON data instead of instruc
         markers: ["primary", "sensitive"]
       }
     ],
-    clarificationAnswers: {},
     strengthApproved: false
   });
 

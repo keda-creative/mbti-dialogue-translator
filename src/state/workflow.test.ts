@@ -36,16 +36,6 @@ function analyzedState(): WorkflowState {
     ...initialWorkflowState,
     originalMessage: "你这个方案风险太高了。",
     intentCards: [intentCard({ id: "intent-1", markers: ["primary", "softenable"] })],
-    clarifyingQuestions: [
-      {
-        id: "question-1",
-        question: "对方是否已经知道背景？",
-        reason: "影响信息顺序。"
-      }
-    ],
-    clarificationAnswers: {
-      "question-1": "知道一部分。"
-    },
     strengthApproved: true,
     error: "需要安全改写。",
     result
@@ -54,8 +44,6 @@ function analyzedState(): WorkflowState {
 
 function expectAnalysisReset(state: WorkflowState) {
   expect(state.intentCards).toEqual([]);
-  expect(state.clarifyingQuestions).toEqual([]);
-  expect(state.clarificationAnswers).toEqual({});
   expect(state.strengthApproved).toBe(false);
   expect(state.result).toBeNull();
   expect(state.error).toBeNull();
@@ -81,8 +69,7 @@ test("requires a primary intent before translation", () => {
         confidence: "high",
         markers: []
       }
-    ],
-    questions: []
+    ]
   });
 
   expect(selectCanTranslate(withCards)).toBe(false);
@@ -102,8 +89,7 @@ test("keeps only one primary intent", () => {
     cards: [
       { id: "one", type: "information", content: "传递事实", confidence: "high", markers: ["primary"] },
       { id: "two", type: "action", content: "请求行动", confidence: "medium", markers: [] }
-    ],
-    questions: []
+    ]
   });
 
   const next = reducer(state, { type: "toggleMarker", id: "two", marker: "primary" });
@@ -115,8 +101,7 @@ test("keeps only one primary intent", () => {
 test("toggles off an existing primary intent", () => {
   const state = reducer(initialWorkflowState, {
     type: "setIntentCards",
-    cards: [intentCard({ id: "intent-1", markers: ["primary"] })],
-    questions: []
+    cards: [intentCard({ id: "intent-1", markers: ["primary"] })]
   });
 
   const next = reducer(state, { type: "toggleMarker", id: "intent-1", marker: "primary" });
@@ -131,8 +116,7 @@ test("does not clear the primary intent when toggling primary for an unknown id"
     cards: [
       intentCard({ id: "intent-1", markers: ["primary"] }),
       intentCard({ id: "intent-2", type: "action", markers: ["sensitive"] })
-    ],
-    questions: []
+    ]
   });
 
   const next = reducer(state, { type: "toggleMarker", id: "missing", marker: "primary" });
@@ -144,8 +128,7 @@ test("does not clear the primary intent when toggling primary for an unknown id"
 test("toggles non-primary markers on and off", () => {
   const state = reducer(initialWorkflowState, {
     type: "setIntentCards",
-    cards: [intentCard({ id: "intent-1" })],
-    questions: []
+    cards: [intentCard({ id: "intent-1" })]
   });
 
   const withSensitive = reducer(state, { type: "toggleMarker", id: "intent-1", marker: "sensitive" });
@@ -183,8 +166,7 @@ test("clears strength approval when the strength gate is no longer visible", () 
 test("clears the translation result when intent content or strength approval changes", () => {
   const withCards = reducer(initialWorkflowState, {
     type: "setIntentCards",
-    cards: [intentCard({ id: "intent-1", markers: ["primary"] })],
-    questions: []
+    cards: [intentCard({ id: "intent-1", markers: ["primary"] })]
   });
   const withResult = reducer(withCards, { type: "setResult", result });
 
@@ -202,8 +184,7 @@ test("clones intent cards and markers when setting intent cards", () => {
   const cards = [intentCard({ id: "intent-1", markers: ["primary"] })];
   const state = reducer(initialWorkflowState, {
     type: "setIntentCards",
-    cards,
-    questions: []
+    cards
   });
 
   cards[0]!.content = "外部变更";

@@ -1,6 +1,6 @@
 import { mockAnalyzeIntents, mockGenerateTranslation } from "./mockAi";
 
-test("mock analysis returns intent cards and questions", () => {
+test("mock analysis returns intent cards without clarifying questions", () => {
   const response = mockAnalyzeIntents({
     config: { senderType: "ENFP", receiverType: "ISTJ", scenario: "work" },
     originalMessage: "你这个方案风险太高了，我们不能继续这样做。"
@@ -10,6 +10,7 @@ test("mock analysis returns intent cards and questions", () => {
   expect(response.intentCards.some((card) => card.type === "information")).toBe(
     true
   );
+  expect(response.clarifyingQuestions).toEqual([]);
 });
 
 test("mock translation keeps the primary intent", () => {
@@ -25,7 +26,6 @@ test("mock translation keeps the primary intent", () => {
         markers: ["primary"]
       }
     ],
-    clarificationAnswers: {},
     strengthApproved: true
   });
 
@@ -46,7 +46,6 @@ test("mock translation does not soften strong expression without approval", () =
         markers: ["primary"]
       }
     ],
-    clarificationAnswers: {},
     strengthApproved: false
   });
 

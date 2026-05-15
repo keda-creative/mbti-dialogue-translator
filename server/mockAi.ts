@@ -168,15 +168,7 @@ export function mockAnalyzeIntents(
 
   return analyzeIntentResponseSchema.parse({
     intentCards,
-    clarifyingQuestions: hasStrongSignal
-      ? [
-          {
-            id: "clarify-strength",
-            question: "这句话里比较强的力度，是你希望保留的重点吗？",
-            reason: "原话包含较强表达信号，翻译前需要确认是否保留强度。"
-          }
-        ]
-      : [],
+    clarifyingQuestions: [],
     safetyRedirect: null
   });
 }

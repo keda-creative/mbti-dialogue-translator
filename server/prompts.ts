@@ -40,7 +40,7 @@ export function buildIntentPrompt(request: AnalyzeIntentRequest): string {
 - 不做人格诊断，不把 MBTI 写成绝对判断；MBTI 只能作为沟通偏好参考。
 - 不要断言某类型“一定会”怎样，只能使用可能、倾向、参考这类谨慎表达。
 - 如果原话或目标包含操控、欺骗、胁迫、威胁或诱导对方违背真实意愿，请设置 safetyRedirect，说明应改为透明、尊重边界的沟通目标。
-- intentCards 至少 1 个，最多 6 个；必要时提供最多 3 个澄清问题。
+- intentCards 至少 1 个，最多 6 个；clarifyingQuestions 固定返回空数组。
 - 给最关键意图加 primary；可能伤害关系、边界或信任的意图加 sensitive；可在用户确认后调整强度的表达加 softenable。
 - 请基于用户数据 JSON 输出结构化 JSON。
 
@@ -69,7 +69,6 @@ export function buildTranslationPrompt(request: TranslationRequest): string {
 ${formatUserData({
   ...buildBaseUserData(request),
   intentCards: request.intentCards,
-  clarificationAnswers: request.clarificationAnswers,
   primaryIntents,
   sensitiveIntents,
   strengthApproved: request.strengthApproved

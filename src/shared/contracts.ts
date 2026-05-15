@@ -43,7 +43,7 @@ export const analyzeIntentRequestSchema = z.object({
 
 export const analyzeIntentResponseSchema = z.object({
   intentCards: z.array(intentCardSchema).min(1).max(6),
-  clarifyingQuestions: z.array(clarifyingQuestionSchema).max(3),
+  clarifyingQuestions: z.array(clarifyingQuestionSchema).max(0),
   safetyRedirect: z.string().nullable()
 });
 
@@ -68,7 +68,6 @@ export const translationRequestSchema = z.object({
   originalMessage: z.string().trim().min(1),
   conversationBackground: z.string().max(1000).optional(),
   intentCards: z.array(intentCardSchema).min(1),
-  clarificationAnswers: z.record(z.string(), z.string()),
   strengthApproved: z.boolean()
 });
 
