@@ -37,7 +37,7 @@ export const clarifyingQuestionSchema = z.object({
 
 export const analyzeIntentRequestSchema = z.object({
   config: translatorConfigSchema,
-  originalMessage: z.string().min(6),
+  originalMessage: z.string().trim().min(1),
   conversationBackground: z.string().max(1000).optional()
 });
 
@@ -65,7 +65,7 @@ const translationStrategySchema = z.object({
 
 export const translationRequestSchema = z.object({
   config: translatorConfigSchema,
-  originalMessage: z.string().min(6),
+  originalMessage: z.string().trim().min(1),
   conversationBackground: z.string().max(1000).optional(),
   intentCards: z.array(intentCardSchema).min(1),
   clarificationAnswers: z.record(z.string(), z.string()),

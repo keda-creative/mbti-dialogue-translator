@@ -1,7 +1,17 @@
 import {
+  analyzeIntentRequestSchema,
   analyzeIntentResponseSchema,
   translationResponseSchema
 } from "./contracts";
+
+test("accepts a short original message for intent analysis", () => {
+  const parsed = analyzeIntentRequestSchema.parse({
+    config: { senderType: "ENFP", receiverType: "ISTJ", scenario: "work" },
+    originalMessage: "不行"
+  });
+
+  expect(parsed.originalMessage).toBe("不行");
+});
 
 test("validates an intent analysis response", () => {
   const parsed = analyzeIntentResponseSchema.parse({

@@ -178,7 +178,7 @@ export function reducer(state: WorkflowState, action: WorkflowAction): WorkflowS
 }
 
 export function selectCanAnalyze(state: WorkflowState): boolean {
-  return state.originalMessage.trim().length >= 6;
+  return state.originalMessage.trim().length > 0;
 }
 
 export function selectPrimaryIntent(state: WorkflowState): IntentCard | undefined {

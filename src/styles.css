@@ -153,6 +153,11 @@ textarea {
   font-weight: 700;
 }
 
+.disabled-reason {
+  color: #687469;
+  font-size: 0.85rem;
+}
+
 .intent-list,
 .question-list {
   display: grid;

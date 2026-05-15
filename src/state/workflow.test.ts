@@ -65,7 +65,7 @@ test("requires original message before intent analysis", () => {
   expect(selectCanAnalyze(initialWorkflowState)).toBe(false);
   const state = reducer(initialWorkflowState, {
     type: "setOriginalMessage",
-    value: "你这个方案风险太高了，我们不能继续这样做。"
+    value: "不行"
   });
   expect(selectCanAnalyze(state)).toBe(true);
 });

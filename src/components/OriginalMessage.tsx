@@ -58,6 +58,9 @@ export function OriginalMessage({
         >
           {buttonLabel}
         </button>
+        {!canAnalyze ? (
+          <span className="disabled-reason">填写原话后可识别</span>
+        ) : null}
         {hasAnalysis ? (
           <span className="status-pill" aria-live="polite">
             已识别
