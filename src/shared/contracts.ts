@@ -6,7 +6,7 @@ import {
   INTENT_TYPE_IDS,
   MBTI_TYPES,
   SCENARIO_IDS
-} from "./domain";
+} from "./domain.js";
 
 const mbtiTypeSchema = z.enum(MBTI_TYPES);
 const scenarioSchema = z.enum(SCENARIO_IDS);

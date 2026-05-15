@@ -7,11 +7,11 @@ import {
   type AnalyzeIntentResponse,
   type TranslationRequest,
   type TranslationResponse
-} from "../src/shared/contracts";
+} from "../src/shared/contracts.js";
 import {
   getCommunicationProfile,
   summarizeDirection
-} from "../src/shared/profiles";
+} from "../src/shared/profiles.js";
 
 const STRONG_SIGNAL_PATTERN = /太|不能|总是|从来|离谱|烦|失望|为什么/;
 const MANIPULATIVE_GOAL_PATTERN = /内疚|骗|操控|PUA|逼|让.*答应/;

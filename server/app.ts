@@ -3,8 +3,8 @@ import express from "express";
 import {
   analyzeIntentRequestSchema,
   translationRequestSchema
-} from "../src/shared/contracts";
-import { analyzeIntents, generateTranslation } from "./openai";
+} from "../src/shared/contracts.js";
+import { analyzeIntents, generateTranslation } from "./openai.js";
 
 export function createApp() {
   const app = express();

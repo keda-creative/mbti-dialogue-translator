@@ -1,7 +1,7 @@
 /// <reference types="node" />
 
 import { config } from "dotenv";
-import { createApp } from "./app";
+import { createApp } from "./app.js";
 
 config({ path: ".env.local" });
 config();

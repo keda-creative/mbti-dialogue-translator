@@ -8,15 +8,15 @@ import {
   type AnalyzeIntentResponse,
   type TranslationRequest,
   type TranslationResponse
-} from "../src/shared/contracts";
+} from "../src/shared/contracts.js";
 import {
   EXPRESSION_SIGNALS,
   INTENT_CONFIDENCE_LEVELS,
   INTENT_MARKERS,
   INTENT_TYPE_IDS
-} from "../src/shared/domain";
-import { mockAnalyzeIntents, mockGenerateTranslation } from "./mockAi";
-import { buildIntentPrompt, buildTranslationPrompt } from "./prompts";
+} from "../src/shared/domain.js";
+import { mockAnalyzeIntents, mockGenerateTranslation } from "./mockAi.js";
+import { buildIntentPrompt, buildTranslationPrompt } from "./prompts.js";
 
 type JsonSchema = Record<string, unknown>;
 type AiProvider = "openai" | "deepseek";

@@ -1,4 +1,4 @@
-import type { MbtiType } from "./domain";
+import type { MbtiType } from "./domain.js";
 
 export interface CommunicationProfile {
   readonly informationOrder: string;
