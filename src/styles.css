@@ -189,8 +189,8 @@ textarea {
 }
 
 .intent-card-header,
-.marker-row,
-.checkbox-line {
+.checkbox-line,
+.preserve-line {
   display: flex;
   align-items: center;
 }
@@ -233,40 +233,20 @@ textarea {
   border-color: #d6a190;
 }
 
-.marker-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.preserve-line {
+  grid-template-columns: none;
+  justify-content: flex-start;
   gap: 10px;
-}
-
-.marker {
-  min-height: 34px;
-  width: 100%;
-  padding: 0 12px;
-  border: 1px solid #c8cfc6;
-  border-radius: 6px;
-  background: #f7f9f6;
-  color: #3f4a43;
-  cursor: pointer;
-}
-
-.marker.active {
-  border-color: #245e4f;
-  background: #e8f3ee;
-  color: #184739;
+  margin: 0;
+  color: #245e4f;
   font-weight: 700;
 }
 
-.marker-control {
-  display: grid;
-  gap: 6px;
-  align-content: start;
-}
-
-.marker-control small {
-  color: #687469;
-  font-size: 0.78rem;
-  line-height: 1.45;
+.preserve-line input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #245e4f;
 }
 
 .hint {
@@ -432,11 +412,6 @@ textarea {
   }
 
   .intent-list {
-    grid-template-columns: 1fr;
-  }
-
-  .marker-row,
-  .step-summary {
     grid-template-columns: 1fr;
   }
 

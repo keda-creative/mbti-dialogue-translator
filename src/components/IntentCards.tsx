@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
-import { INTENT_TYPES, type IntentCard, type IntentMarker } from "../shared/domain";
+import { INTENT_TYPES, type IntentCard } from "../shared/domain";
 
 interface IntentCardsProps {
   cards: IntentCard[];
-  canTranslate: boolean;
+  canContinue: boolean;
   onUpdate: (id: string, content: string) => void;
   onDelete: (id: string) => void;
-  onToggle: (id: string, marker: IntentMarker) => void;
+  onTogglePreserved: (id: string) => void;
 }
 
 interface IntentCardItemProps {
@@ -15,34 +15,15 @@ interface IntentCardItemProps {
   position: number;
   onUpdate: (id: string, content: string) => void;
   onDelete: (id: string) => void;
-  onToggle: (id: string, marker: IntentMarker) => void;
+  onTogglePreserved: (id: string) => void;
 }
-
-const markerCopy: Record<IntentMarker, { label: string; helper: string }> = {
-  primary: {
-    label: "主意图",
-    helper: "译文必须优先保留的核心意思，通常只选一个。"
-  },
-  sensitive: {
-    label: "敏感意图",
-    helper: "处理不好容易伤害关系、边界或信任，翻译时会更谨慎。"
-  },
-  softenable: {
-    label: "可弱化",
-    helper: "允许后可把语气放缓，但不能改变真正意思。"
-  }
-};
 
 function getIntentType(card: IntentCard) {
   return INTENT_TYPES.find((type) => type.id === card.type);
 }
 
-function markerClass(card: IntentCard, marker: IntentMarker): string {
-  return card.markers.includes(marker) ? "marker active" : "marker";
-}
-
-function isMarkerActive(card: IntentCard, marker: IntentMarker): boolean {
-  return card.markers.includes(marker);
+function isPreserved(card: IntentCard): boolean {
+  return card.markers.includes("primary");
 }
 
 function IntentCardItem({
@@ -50,7 +31,7 @@ function IntentCardItem({
   position,
   onUpdate,
   onDelete,
-  onToggle
+  onTogglePreserved
 }: IntentCardItemProps) {
   const [draft, setDraft] = useState(card.content);
   const cardLabel = `第 ${position} 个意图`;
@@ -90,32 +71,24 @@ function IntentCardItem({
           rows={3}
         />
       </label>
-      <div className="marker-row" aria-label="意图标记">
-        {(["primary", "sensitive", "softenable"] as const).map((marker) => (
-          <div className="marker-control" key={marker}>
-            <button
-              aria-label={`${cardLabel}：${markerCopy[marker].label}`}
-              aria-pressed={isMarkerActive(card, marker)}
-              className={markerClass(card, marker)}
-              type="button"
-              onClick={() => onToggle(card.id, marker)}
-            >
-              {markerCopy[marker].label}
-            </button>
-            <small>{markerCopy[marker].helper}</small>
-          </div>
-        ))}
-      </div>
+      <label className="preserve-line">
+        <input
+          checked={isPreserved(card)}
+          type="checkbox"
+          onChange={() => onTogglePreserved(card.id)}
+        />
+        <span>保留这个意图</span>
+      </label>
     </article>
   );
 }
 
 export function IntentCards({
   cards,
-  canTranslate,
+  canContinue,
   onUpdate,
   onDelete,
-  onToggle
+  onTogglePreserved
 }: IntentCardsProps) {
   if (cards.length === 0) {
     return null;
@@ -125,9 +98,9 @@ export function IntentCards({
     <section className="panel intent-panel">
       <div className="panel-heading">
         <p className="step-label">02 意图确认</p>
-        <h2>确认真正想表达的意图</h2>
+        <h2>选择翻译必须保留的意图</h2>
         <p className="panel-intro">
-          先看每张卡是不是你的真实意思，再用标记告诉系统翻译时该优先保留什么、哪里要谨慎处理。
+          勾选你希望译文一定保留的意思。没勾选的意图不会被当成翻译重点。
         </p>
       </div>
       <div className="intent-list">
@@ -138,11 +111,11 @@ export function IntentCards({
             position={index + 1}
             onUpdate={onUpdate}
             onDelete={onDelete}
-            onToggle={onToggle}
+            onTogglePreserved={onTogglePreserved}
           />
         ))}
       </div>
-      {!canTranslate ? <p className="hint">请选择一个主意图后再生成翻译。</p> : null}
+      {!canContinue ? <p className="hint">至少选择一个要保留的意图。</p> : null}
     </section>
   );
 }

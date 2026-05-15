@@ -3,9 +3,13 @@ import type { TranslationResult as Result } from "../shared/domain";
 
 interface TranslationResultProps {
   result: Result | null;
+  stepLabel?: string;
 }
 
-export function TranslationResult({ result }: TranslationResultProps) {
+export function TranslationResult({
+  result,
+  stepLabel = "03 翻译结果"
+}: TranslationResultProps) {
   if (!result) {
     return null;
   }
@@ -19,7 +23,7 @@ export function TranslationResult({ result }: TranslationResultProps) {
   return (
     <section className="panel result-panel">
       <div className="panel-heading">
-        <p className="step-label">03 翻译结果</p>
+        <p className="step-label">{stepLabel}</p>
         <h2>可以复制发送的版本</h2>
       </div>
       <div className="translated-message">{result.translatedMessage}</div>

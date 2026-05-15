@@ -40,16 +40,16 @@ export function createApp() {
     if (!parsed.success) {
       response
         .status(400)
-        .json({ message: "翻译请求缺少已确认意图，请检查卡片标记。" });
+        .json({ message: "翻译请求缺少已确认意图，请检查保留意图。" });
       return;
     }
 
-    const hasPrimaryIntent = parsed.data.intentCards.some((card) =>
+    const hasPreservedIntent = parsed.data.intentCards.some((card) =>
       card.markers.includes("primary")
     );
 
-    if (!hasPrimaryIntent) {
-      response.status(400).json({ message: "请先标记一个主意图。" });
+    if (!hasPreservedIntent) {
+      response.status(400).json({ message: "请至少选择一个要保留的意图。" });
       return;
     }
 

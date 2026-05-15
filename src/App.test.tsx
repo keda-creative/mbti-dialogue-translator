@@ -120,14 +120,44 @@ test("lets the user return to previous steps in the progressive workflow", async
   expect(await screen.findByRole("button", { name: "生成翻译" })).toBeEnabled();
 
   await user.click(screen.getByRole("button", { name: "生成翻译" }));
-  expect(await screen.findByText("已确认 1 个意图")).toBeInTheDocument();
+  expect(await screen.findByText("已选择 1 个保留意图")).toBeInTheDocument();
   expect(screen.getByText("可以复制发送的版本")).toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "返回修改意图" }));
-  expect(screen.getByText("确认真正想表达的意图")).toBeInTheDocument();
+  expect(screen.getByText("选择翻译必须保留的意图")).toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "返回修改原话" }));
   expect(screen.getByLabelText("原话")).toHaveValue("你这个方案风险太高了。");
+});
+
+test("shows supplemental confirmation only after intent confirmation", async () => {
+  const user = userEvent.setup();
+  vi.mocked(requestIntentCards).mockResolvedValue({
+    intentCards: [
+      {
+        id: "intent-1",
+        type: "emotion",
+        content: "我希望对方理解我的担心。",
+        confidence: "high",
+        markers: ["primary", "softenable"]
+      }
+    ],
+    clarifyingQuestions: [],
+    safetyRedirect: null
+  });
+
+  render(<App />);
+
+  await user.type(screen.getByLabelText("原话"), "你一直拖着不回复，我很着急。");
+  await user.click(screen.getByRole("button", { name: "识别意图" }));
+
+  expect(await screen.findByText("选择翻译必须保留的意图")).toBeInTheDocument();
+  expect(screen.queryByText("表达强度确认")).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "确认意图" }));
+
+  expect(screen.getByText("表达强度确认")).toBeInTheDocument();
+  expect(screen.getByText("03 补充确认")).toBeInTheDocument();
 });
 
 test("does not show clarifying questions after intent analysis", async () => {
@@ -158,7 +188,7 @@ test("does not show clarifying questions after intent analysis", async () => {
   await user.click(screen.getByRole("button", { name: "识别意图" }));
 
   expect(await screen.findByText("我想提醒方案风险。")).toBeInTheDocument();
-  expect(screen.queryByText("03 补充上下文")).not.toBeInTheDocument();
+  expect(screen.queryByText("03 补充确认")).not.toBeInTheDocument();
   expect(screen.queryByText("你希望保留强烈语气吗？")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "生成翻译" })).toBeEnabled();
 });

@@ -11,13 +11,12 @@ import {
   initialWorkflowState,
   reducer,
   selectCanAnalyze,
-  selectPrimaryIntent,
   selectCanTranslate,
   type WorkflowState
 } from "./state/workflow";
 
 const DRAFT_STORAGE_KEY = "mbti-dialogue-translator-draft";
-type WorkflowStep = "input" | "intent" | "result";
+type WorkflowStep = "input" | "intent" | "strength" | "result";
 
 interface AnalysisRequestSnapshot {
   config: TranslatorConfig;
@@ -96,11 +95,17 @@ export default function App() {
   const hasSoftenableIntent = state.intentCards.some((card) =>
     card.markers.includes("softenable")
   );
-  const primaryIntent = selectPrimaryIntent(state);
+  const preservedIntents = state.intentCards.filter((card) =>
+    card.markers.includes("primary")
+  );
   const currentStep: WorkflowStep =
     activeStep === "result" && state.result
       ? "result"
-      : activeStep === "intent" && state.intentCards.length > 0
+      : activeStep === "strength" &&
+          state.intentCards.length > 0 &&
+          hasSoftenableIntent
+        ? "strength"
+        : activeStep === "intent" && state.intentCards.length > 0
         ? "intent"
         : "input";
   const latestInputRef = useRef<AnalysisRequestSnapshot>({
@@ -316,7 +321,7 @@ export default function App() {
             <>
               <IntentCards
                 cards={state.intentCards}
-                canTranslate={selectCanTranslate(state)}
+                canContinue={selectCanTranslate(state)}
                 onUpdate={(id, content) => {
                   setActiveStep("intent");
                   dispatch({ type: "updateIntentContent", id, content });
@@ -325,24 +330,63 @@ export default function App() {
                   setActiveStep("intent");
                   dispatch({ type: "deleteIntent", id });
                 }}
-                onToggle={(id, marker) => {
+                onTogglePreserved={(id) => {
                   setActiveStep("intent");
-                  dispatch({ type: "toggleMarker", id, marker });
+                  dispatch({ type: "togglePreserved", id });
                 }}
               />
-              {hasSoftenableIntent ? (
-                <StrengthGate
-                  approved={state.strengthApproved}
-                  onChange={(value) => {
-                    setActiveStep("intent");
-                    dispatch({ type: "setStrengthApproved", value });
-                  }}
-                />
-              ) : null}
               <button
                 className="primary-action"
                 type="button"
                 disabled={!selectCanTranslate(state) || state.isLoading}
+                onClick={() => {
+                  if (hasSoftenableIntent) {
+                    setActiveStep("strength");
+                    return;
+                  }
+                  void translate();
+                }}
+              >
+                {hasSoftenableIntent
+                  ? "确认意图"
+                  : state.isLoading
+                    ? "生成中..."
+                    : "生成翻译"}
+              </button>
+            </>
+          ) : null}
+          {currentStep === "strength" ? (
+            <>
+              <section className="panel step-summary">
+                <div>
+                  <p className="step-label">02 意图确认</p>
+                  <h2>已选择 {preservedIntents.length} 个保留意图</h2>
+                  <p>
+                    {formatPreview(
+                      preservedIntents[0]?.content ?? "",
+                      "尚未选择保留意图"
+                    )}
+                  </p>
+                </div>
+                <button
+                  className="secondary-action"
+                  type="button"
+                  onClick={() => setActiveStep("intent")}
+                >
+                  返回修改意图
+                </button>
+              </section>
+              <StrengthGate
+                approved={state.strengthApproved}
+                onChange={(value) => {
+                  setActiveStep("strength");
+                  dispatch({ type: "setStrengthApproved", value });
+                }}
+              />
+              <button
+                className="primary-action"
+                type="button"
+                disabled={state.isLoading}
                 onClick={translate}
               >
                 {state.isLoading ? "生成中..." : "生成翻译"}
@@ -354,10 +398,12 @@ export default function App() {
               <section className="panel step-summary">
                 <div>
                   <p className="step-label">02 意图确认</p>
-                  <h2>已确认 {state.intentCards.length} 个意图</h2>
+                  <h2>已选择 {preservedIntents.length} 个保留意图</h2>
                   <p>
-                    主意图：
-                    {formatPreview(primaryIntent?.content ?? "", "尚未选择主意图")}
+                    {formatPreview(
+                      preservedIntents[0]?.content ?? "",
+                      "尚未选择保留意图"
+                    )}
                   </p>
                 </div>
                 <button
@@ -368,7 +414,30 @@ export default function App() {
                   返回修改意图
                 </button>
               </section>
-              <TranslationResult result={state.result} />
+              {hasSoftenableIntent ? (
+                <section className="panel step-summary">
+                  <div>
+                    <p className="step-label">03 补充确认</p>
+                    <h2>已确认表达强度</h2>
+                    <p>
+                      {state.strengthApproved
+                        ? "允许系统把强烈表达处理得更柔和。"
+                        : "保留原话里的表达强度，只调整顺序和清晰度。"}
+                    </p>
+                  </div>
+                  <button
+                    className="secondary-action"
+                    type="button"
+                    onClick={() => setActiveStep("strength")}
+                  >
+                    返回修改补充确认
+                  </button>
+                </section>
+              ) : null}
+              <TranslationResult
+                result={state.result}
+                stepLabel={hasSoftenableIntent ? "04 翻译结果" : "03 翻译结果"}
+              />
             </>
           ) : null}
         </div>

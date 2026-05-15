@@ -182,17 +182,19 @@ export function mockGenerateTranslation(
     parsed.config.senderType,
     parsed.config.receiverType
   );
-  const primaryIntent =
-    parsed.intentCards.find((card) => card.markers.includes("primary")) ??
-    parsed.intentCards[0];
+  const primaryIntents = parsed.intentCards.filter((card) =>
+    card.markers.includes("primary")
+  );
+  const requiredIntents =
+    primaryIntents.length > 0 ? primaryIntents : [parsed.intentCards[0]!];
   const sensitiveIntents = parsed.intentCards.filter((card) =>
     card.markers.includes("sensitive")
   );
   const preservedIntents = [
-    primaryIntent.content,
+    ...requiredIntents.map((card) => card.content),
     ...sensitiveIntents
       .map((card) => card.content)
-      .filter((content) => content !== primaryIntent.content)
+      .filter((content) => !requiredIntents.some((card) => card.content === content))
   ];
   const adjustedExpressions = parsed.strengthApproved
     ? ["把原话里可能被听成责备的部分，调整成事实和流程风险"]

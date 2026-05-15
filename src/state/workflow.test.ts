@@ -58,7 +58,7 @@ test("requires original message before intent analysis", () => {
   expect(selectCanAnalyze(state)).toBe(true);
 });
 
-test("requires a primary intent before translation", () => {
+test("requires a preserved intent before translation", () => {
   const withCards = reducer(initialWorkflowState, {
     type: "setIntentCards",
     cards: [
@@ -75,15 +75,14 @@ test("requires a primary intent before translation", () => {
   expect(selectCanTranslate(withCards)).toBe(false);
 
   const withPrimary = reducer(withCards, {
-    type: "toggleMarker",
-    id: "intent-1",
-    marker: "primary"
+    type: "togglePreserved",
+    id: "intent-1"
   });
 
   expect(selectCanTranslate(withPrimary)).toBe(true);
 });
 
-test("keeps only one primary intent", () => {
+test("allows multiple preserved intents", () => {
   const state = reducer(initialWorkflowState, {
     type: "setIntentCards",
     cards: [
@@ -92,25 +91,25 @@ test("keeps only one primary intent", () => {
     ]
   });
 
-  const next = reducer(state, { type: "toggleMarker", id: "two", marker: "primary" });
+  const next = reducer(state, { type: "togglePreserved", id: "two" });
 
-  expect(next.intentCards.find((card) => card.id === "one")?.markers).not.toContain("primary");
+  expect(next.intentCards.find((card) => card.id === "one")?.markers).toContain("primary");
   expect(next.intentCards.find((card) => card.id === "two")?.markers).toContain("primary");
 });
 
-test("toggles off an existing primary intent", () => {
+test("toggles off an existing preserved intent", () => {
   const state = reducer(initialWorkflowState, {
     type: "setIntentCards",
     cards: [intentCard({ id: "intent-1", markers: ["primary"] })]
   });
 
-  const next = reducer(state, { type: "toggleMarker", id: "intent-1", marker: "primary" });
+  const next = reducer(state, { type: "togglePreserved", id: "intent-1" });
 
   expect(next.intentCards[0]?.markers).not.toContain("primary");
   expect(selectCanTranslate(next)).toBe(false);
 });
 
-test("does not clear the primary intent when toggling primary for an unknown id", () => {
+test("does not change preserved intents when toggling an unknown id", () => {
   const state = reducer(initialWorkflowState, {
     type: "setIntentCards",
     cards: [
@@ -119,27 +118,10 @@ test("does not clear the primary intent when toggling primary for an unknown id"
     ]
   });
 
-  const next = reducer(state, { type: "toggleMarker", id: "missing", marker: "primary" });
+  const next = reducer(state, { type: "togglePreserved", id: "missing" });
 
   expect(next.intentCards).toEqual(state.intentCards);
   expect(next.intentCards.find((card) => card.id === "intent-1")?.markers).toContain("primary");
-});
-
-test("toggles non-primary markers on and off", () => {
-  const state = reducer(initialWorkflowState, {
-    type: "setIntentCards",
-    cards: [intentCard({ id: "intent-1" })]
-  });
-
-  const withSensitive = reducer(state, { type: "toggleMarker", id: "intent-1", marker: "sensitive" });
-  const withoutSensitive = reducer(withSensitive, {
-    type: "toggleMarker",
-    id: "intent-1",
-    marker: "sensitive"
-  });
-
-  expect(withSensitive.intentCards[0]?.markers).toContain("sensitive");
-  expect(withoutSensitive.intentCards[0]?.markers).not.toContain("sensitive");
 });
 
 test("clears strength approval when the strength gate is no longer visible", () => {
@@ -149,17 +131,11 @@ test("clears strength approval when the strength gate is no longer visible", () 
     strengthApproved: true
   };
 
-  const withoutSoftenableMarker = reducer(state, {
-    type: "toggleMarker",
-    id: "intent-1",
-    marker: "softenable"
-  });
   const withoutSoftenableCard = reducer(state, {
     type: "deleteIntent",
     id: "intent-1"
   });
 
-  expect(withoutSoftenableMarker.strengthApproved).toBe(false);
   expect(withoutSoftenableCard.strengthApproved).toBe(false);
 });
 
