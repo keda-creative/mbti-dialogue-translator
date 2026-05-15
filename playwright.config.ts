@@ -4,6 +4,11 @@ export default defineConfig({
   testDir: "tests/e2e",
   webServer: {
     command: "npm run dev",
+    env: {
+      AI_PROVIDER: "mock",
+      DEEPSEEK_API_KEY: "",
+      OPENAI_API_KEY: ""
+    },
     url: "http://127.0.0.1:5173",
     reuseExistingServer: true,
     timeout: 120000

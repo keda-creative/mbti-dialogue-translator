@@ -13,7 +13,25 @@ npm run dev
 
 打开 `http://localhost:5173`。
 
-没有 `OPENAI_API_KEY` 时，API 会使用本地 mock 响应，方便验证完整流程。
+没有配置模型 key 时，API 会使用本地 mock 响应，方便验证完整流程。
+
+## 使用 DeepSeek API
+
+推荐把本地密钥放在不会提交的 `.env.local`：
+
+```bash
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY="你的 DeepSeek API key"
+DEEPSEEK_MODEL="deepseek-v4-flash"
+```
+
+然后运行：
+
+```bash
+npm run dev
+```
+
+服务端会通过 DeepSeek 的 OpenAI-compatible Chat Completions 接口生成 JSON 响应。
 
 ## 使用 OpenAI API
 
