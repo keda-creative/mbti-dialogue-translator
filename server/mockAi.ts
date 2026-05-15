@@ -14,11 +14,41 @@ import {
 } from "../src/shared/profiles";
 
 const STRONG_SIGNAL_PATTERN = /太|不能|总是|从来|离谱|烦|失望|为什么/;
+const MANIPULATIVE_GOAL_PATTERN = /内疚|骗|操控|PUA|逼|让.*答应/;
 
 export function mockAnalyzeIntents(
   request: AnalyzeIntentRequest
 ): AnalyzeIntentResponse {
   const parsed = analyzeIntentRequestSchema.parse(request);
+  const hasManipulativeGoal = MANIPULATIVE_GOAL_PATTERN.test(
+    parsed.originalMessage
+  );
+
+  if (hasManipulativeGoal) {
+    return analyzeIntentResponseSchema.parse({
+      intentCards: [
+        {
+          id: "intent-need",
+          type: "information",
+          content:
+            "我想表达自己的真实需求，而不是通过内疚或压力让对方答应。",
+          confidence: "high",
+          markers: ["primary"]
+        },
+        {
+          id: "intent-boundary",
+          type: "action",
+          content: "我希望用清楚、不胁迫的方式提出请求或边界。",
+          confidence: "high",
+          markers: ["sensitive"]
+        }
+      ],
+      clarifyingQuestions: [],
+      safetyRedirect:
+        "这个目标容易变成操控或内疚诱导。我会改为帮你表达真实需求、请求和边界。"
+    });
+  }
+
   const hasStrongSignal = STRONG_SIGNAL_PATTERN.test(parsed.originalMessage);
   const riskFocused = /风险|问题|隐患|不稳|失控/.test(parsed.originalMessage);
 

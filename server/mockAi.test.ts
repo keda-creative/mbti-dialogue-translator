@@ -53,3 +53,12 @@ test("mock translation does not soften strong expression without approval", () =
   expect(response.adjustedExpressions.join(" ")).toContain("保留");
   expect(response.adjustedExpressions.join(" ")).not.toContain("降低");
 });
+
+test("mock analysis redirects manipulative goals", () => {
+  const response = mockAnalyzeIntents({
+    config: { senderType: "ENTJ", receiverType: "INFP", scenario: "romantic" },
+    originalMessage: "帮我说到让对方内疚，然后答应我。"
+  });
+
+  expect(response.safetyRedirect).toContain("真实需求");
+});
